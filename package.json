@@ -2,13 +2,26 @@
   "name": "angular-http-raml",
   "version": "0.0.1",
   "description": "testing library for creating angular 4 Http instances based on a RAML definition",
-  "main": "index.js",
+  "main": "dist/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "gulp test"
   },
   "author": "Bence Eros <ebence88@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "raml-1-parser": "^1.1.26"
+  },
+  "devDependencies": {
+    "@angular/core": "^4.2.4",
+    "@angular/http": "^4.2.4",
+    "core-js": "^2.4.1",
+    "gulp": "^3.9.1",
+    "gulp-jasmine": "^2.4.2",
+    "gulp-sourcemaps": "^2.6.0",
+    "gulp-typescript": "^3.1.7",
+    "jasmine": "^2.6.0",
+    "karma": "^1.7.0",
+    "rxjs": "^5.4.1",
+    "typescript": "^2.3.4"
   }
 }

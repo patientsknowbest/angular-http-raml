@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES5",
+    "moduleResolution": "node",
+    "declaration": false,
+    "noImplicitAny": false,
+    "removeComments": false,
+    "noLib": false,
+    "sourceMap": true,
+    "outDir": "dist",
+    "lib": [
+      "es2016",
+      "dom"]
+  },
+  "include" : ["RamlBackend.ts"],
+  "typeRoots": ["./typings", "node_modules/@types"]
+}
