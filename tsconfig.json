@@ -10,8 +10,8 @@
     "outDir": "dist",
     "lib": [
       "es2016",
-      "dom"]
+      "dom"],
+    "typeRoots": ["./typings/globals", "node_modules/@types"]
   },
-  "include" : ["RamlBackend.ts"],
-  "typeRoots": ["./typings", "node_modules/@types"]
+  "include" : ["*.ts"]
 }
