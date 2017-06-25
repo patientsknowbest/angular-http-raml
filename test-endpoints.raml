@@ -1,0 +1,46 @@
+#%RAML 1.0
+title: Test endpoints
+version: v0
+baseUri: http://dummy-endpoint
+mediaType: application/json
+types:
+  Person:
+    type: object
+    properties:
+      name:
+        required: true
+        type: string
+/auth:
+  /token:
+    get:
+      queryParameters:
+        page:
+          type: number
+        per_page:
+          type: number
+        category:
+          type: string
+      responses:
+        200:
+          body:
+            type: Person
+            example:
+              name: "John Smith"
+#        type: !include access-token.json
+    post:
+      responses:
+        201:
+          body:
+            example:
+              message: "created"
+/create/whatever:
+  get:
+    responses:
+      200:
+        body:
+          type: Person
+          examples:
+            example01:
+              name: "Alice"
+            example02:
+              name: "Bob"

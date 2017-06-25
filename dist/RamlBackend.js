@@ -12,18 +12,89 @@ var __extends = (this && this.__extends) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 var testing_1 = require("@angular/http/testing");
 var raml10parser_1 = require("raml-1-parser/dist/raml1/artifacts/raml10parser");
+var raml_1_parser_1 = require("raml-1-parser");
+var http_1 = require("@angular/http");
+var RequestPattern = (function () {
+    function RequestPattern(expectedUri, expectedMethod) {
+        this.expectedUri = expectedUri;
+        this.expectedMethod = expectedMethod;
+    }
+    RequestPattern.prototype.matches = function (request) {
+        var actualMethod = http_1.RequestMethod[request.method].toLowerCase();
+        return actualMethod === this.expectedMethod
+            && request.url === this.expectedUri;
+    };
+    return RequestPattern;
+}());
+exports.RequestPattern = RequestPattern;
+function lookupExampleResponseBody(respBodyDef) {
+    if (respBodyDef.example() === null) {
+        return respBodyDef.examples()[0].value();
+    }
+    else {
+        return respBodyDef.example().value();
+    }
+}
+function buildRequestPatterns(api) {
+    var entries = [];
+    for (var i in api.allResources()) {
+        var resource = api.allResources()[i];
+        for (var j in resource.methods()) {
+            var method = resource.methods()[j];
+            var pattern = new RequestPattern(resource.absoluteUri(), method.method());
+            var response = new http_1.Response(new http_1.ResponseOptions({
+                status: new Number(method.responses()[0].code().value()).valueOf(),
+                body: lookupExampleResponseBody(method.responses()[0].body()[0])
+            }));
+            entries.push({
+                requestPattern: pattern,
+                response: response
+            });
+        }
+    }
+    return entries;
+}
 var RamlBackend = (function (_super) {
     __extends(RamlBackend, _super);
     function RamlBackend() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super.call(this) || this;
+        _this.matchEntries = [];
+        _this.connections.subscribe(_this.handleConnection.bind(_this));
+        return _this;
     }
-    RamlBackend.prototype.doStuff = function () {
-        var raml = raml10parser_1.loadRAMLSync("./github.raml", []);
-        var api = raml10parser_1.loadApiSync("./github.raml");
-        console.log(api.allResources()[0].absoluteUri());
+    RamlBackend.prototype.handleConnection = function (conn) {
+        var request = conn.request;
+        conn.mockRespond(this.findMatchingResponse(request));
+    };
+    RamlBackend.prototype.findMatchingResponse = function (request) {
+        for (var i in this.matchEntries) {
+            var entry = this.matchEntries[i];
+            if (entry.requestPattern.matches(request)) {
+                return entry.response;
+            }
+        }
+        throw new Error("no matching request pattern found");
+    };
+    Object.defineProperty(RamlBackend.prototype, "endpoints", {
+        get: function () {
+            var endpoints = [];
+            this.api.allResources().forEach(function (i) { return endpoints.push(i.absoluteUri()); });
+            return endpoints;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    RamlBackend.prototype.loadRAMLFromPath = function (path) {
+        this.api = raml10parser_1.loadApiSync(path);
+        this.matchEntries = buildRequestPatterns(this.api);
+        return this;
+    };
+    RamlBackend.prototype.loadRAML = function (content) {
+        this.api = raml_1_parser_1.parseRAMLSync(content);
+        this.matchEntries = buildRequestPatterns(this.api);
+        return this;
     };
     return RamlBackend;
 }(testing_1.MockBackend));
 exports.RamlBackend = RamlBackend;
-
-//# sourceMappingURL=data:application/json;charset=utf8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uL1JhbWxCYWNrZW5kLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLGlEQUFrRDtBQUNsRCxnRkFBMEY7QUFFMUY7SUFBaUMsK0JBQVc7SUFBNUM7O0lBUUEsQ0FBQztJQU5RLDZCQUFPLEdBQWQ7UUFDRSxJQUFNLElBQUksR0FBRywyQkFBWSxDQUFDLGVBQWUsRUFBRSxFQUFFLENBQUMsQ0FBQztRQUMvQyxJQUFNLEdBQUcsR0FBRywwQkFBVyxDQUFDLGVBQWUsQ0FBQyxDQUFDO1FBQ3pDLE9BQU8sQ0FBQyxHQUFHLENBQUMsR0FBRyxDQUFDLFlBQVksRUFBRSxDQUFDLENBQUMsQ0FBQyxDQUFDLFdBQVcsRUFBRSxDQUFDLENBQUM7SUFDbkQsQ0FBQztJQUVILGtCQUFDO0FBQUQsQ0FSQSxBQVFDLENBUmdDLHFCQUFXLEdBUTNDO0FBUlksa0NBQVciLCJmaWxlIjoiUmFtbEJhY2tlbmQuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQge01vY2tCYWNrZW5kfSBmcm9tIFwiQGFuZ3VsYXIvaHR0cC90ZXN0aW5nXCI7XG5pbXBvcnQge2xvYWRBcGlTeW5jLCBsb2FkUkFNTFN5bmN9IGZyb20gXCJyYW1sLTEtcGFyc2VyL2Rpc3QvcmFtbDEvYXJ0aWZhY3RzL3JhbWwxMHBhcnNlclwiO1xuXG5leHBvcnQgY2xhc3MgUmFtbEJhY2tlbmQgZXh0ZW5kcyBNb2NrQmFja2VuZCB7XG5cbiAgcHVibGljIGRvU3R1ZmYoKSB7XG4gICAgY29uc3QgcmFtbCA9IGxvYWRSQU1MU3luYyhcIi4vZ2l0aHViLnJhbWxcIiwgW10pO1xuICAgIGNvbnN0IGFwaSA9IGxvYWRBcGlTeW5jKFwiLi9naXRodWIucmFtbFwiKTtcbiAgICBjb25zb2xlLmxvZyhhcGkuYWxsUmVzb3VyY2VzKClbMF0uYWJzb2x1dGVVcmkoKSk7XG4gIH1cblxufVxuIl19
+//# sourceMappingURL=RamlBackend.js.map
