@@ -19,15 +19,18 @@ class MatchResult {
 
 function uriPatternToRegexp(uriPattern: string): [string[], RegExp] {
   const patternMatcher: RegExp = /\{(\w+)\}/g;
-  const matchingPatterns = patternMatcher.exec(uriPattern);
+  let remainingUriPattern = uriPattern;
+  let startIdx, closingBracketIdx;
   const uriParamNames: string[] = [];
 
-  let i = 1;
-  while (matchingPatterns[i] !== undefined) {
-    uriParamNames.push(matchingPatterns[i]);
-    i++;
+  while((startIdx = remainingUriPattern.search(patternMatcher)) !== null) {
+    remainingUriPattern = remainingUriPattern.substring(startIdx + 1);
+    closingBracketIdx = remainingUriPattern.indexOf("}");
+    let name = remainingUriPattern.substring(0, closingBracketIdx);
+    console.log(name)
+    remainingUriPattern = remainingUriPattern.substring(closingBracketIdx + 1);
   }
-console.log(uriParamNames, matchingPatterns)
+
   const tmp = uriPattern.replace(/\{\w+\}/g, "(.*)");
   return [uriParamNames, new RegExp(tmp)];
 }
