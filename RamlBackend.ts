@@ -52,7 +52,6 @@ export class URIPattern {
     for (let i = 0; i < this.paramNames.length; ++i) {
       paramMap[this.paramNames[i]] = arr[i + 1];
     }
-    console.log(paramMap);
     return matches ? paramMap : null;
   }
 

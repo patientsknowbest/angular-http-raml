@@ -95,7 +95,7 @@ describe("URIPattern", () => {
     expect(createSubject("/person").matches(absUri("/person"))).toEqual({});
   });
 
-  fit("returns param map for match", () => {
+  it("returns param map for match", () => {
     const actual = createSubject("/person/{personId}/{otherParam}/dummy/{thirdParam}").matches(absUri("/person/123/foo/dummy/bar"));
     expect(actual).toEqual({personId: "123", otherParam: "foo", thirdParam: "bar"});
   });
