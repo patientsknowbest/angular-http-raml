@@ -5,17 +5,73 @@ import {parseRAMLSync} from "raml-1-parser";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 
 
+interface URIParams {
+
+  [paramName: string]: any
+
+}
+
+class MatchResult {
+
+  constructor(readonly uriParams: URIParams){}
+
+}
+
+function uriPatternToRegexp(uriPattern: string): [string[], RegExp] {
+  const patternMatcher: RegExp = /\{(\w+)\}/g;
+  const matchingPatterns = patternMatcher.exec(uriPattern);
+  const uriParamNames: string[] = [];
+
+  let i = 1;
+  while (matchingPatterns[i] !== undefined) {
+    uriParamNames.push(matchingPatterns[i]);
+    i++;
+  }
+console.log(uriParamNames, matchingPatterns)
+  const tmp = uriPattern.replace(/\{\w+\}/g, "(.*)");
+  return [uriParamNames, new RegExp(tmp)];
+}
+
+export class URIPattern {
+
+  private pattern: RegExp;
+
+  private paramNames: string[];
+
+  constructor(uriPattern: string) {
+    let patternMatch = uriPatternToRegexp(uriPattern);
+    this.paramNames = patternMatch[0];
+    this.pattern = patternMatch[1];
+  }
+
+  public matches(uri: string): URIParams {
+    const matches = this.pattern.test(uri);
+    const arr = this.pattern.exec(uri);
+    const paramMap: URIParams = {};
+    for (let i = 0; i < this.paramNames.length; ++i) {
+      paramMap[this.paramNames[i]] = arr[i + 1];
+    }
+    console.log(paramMap);
+    return matches ? paramMap : null;
+  }
+
+}
+
 export class RequestPattern {
 
+  private expectedUri: URIPattern;
+
   constructor(
-    readonly expectedUri: string,
+    expectedUri: string,
     readonly expectedMethod: string
-  ) {}
+  ) {
+    this.expectedUri = new URIPattern(expectedUri);
+  }
 
   public matches(request: Request): boolean {
     const actualMethod = RequestMethod[request.method].toLowerCase();
     return actualMethod === this.expectedMethod
-      && request.url === this.expectedUri
+      && this.expectedUri.matches(request.url) !== null
     ;
   }
 }
@@ -29,6 +85,9 @@ interface RequestMatchEntry {
 }
 
 function lookupExampleResponseBody(respBodyDef: TypeDeclaration): string {
+  if (respBodyDef === undefined) {
+    return null;
+  }
   if (respBodyDef.example() === null) {
     return respBodyDef.examples()[0].value();
   } else {
