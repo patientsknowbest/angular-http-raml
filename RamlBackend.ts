@@ -23,11 +23,11 @@ function uriPatternToRegexp(uriPattern: string): [string[], RegExp] {
   let startIdx, closingBracketIdx;
   const uriParamNames: string[] = [];
 
-  while((startIdx = remainingUriPattern.search(patternMatcher)) !== null) {
+  while((startIdx = remainingUriPattern.indexOf("{")) !== -1) {
     remainingUriPattern = remainingUriPattern.substring(startIdx + 1);
     closingBracketIdx = remainingUriPattern.indexOf("}");
     let name = remainingUriPattern.substring(0, closingBracketIdx);
-    console.log(name)
+    uriParamNames.push(name);
     remainingUriPattern = remainingUriPattern.substring(closingBracketIdx + 1);
   }
 

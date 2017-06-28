@@ -25,11 +25,11 @@ function uriPatternToRegexp(uriPattern) {
     var remainingUriPattern = uriPattern;
     var startIdx, closingBracketIdx;
     var uriParamNames = [];
-    while ((startIdx = remainingUriPattern.search(patternMatcher)) !== null) {
+    while ((startIdx = remainingUriPattern.indexOf("{")) !== -1) {
         remainingUriPattern = remainingUriPattern.substring(startIdx + 1);
         closingBracketIdx = remainingUriPattern.indexOf("}");
         var name_1 = remainingUriPattern.substring(0, closingBracketIdx);
-        console.log(name_1);
+        uriParamNames.push(name_1);
         remainingUriPattern = remainingUriPattern.substring(closingBracketIdx + 1);
     }
     var tmp = uriPattern.replace(/\{\w+\}/g, "(.*)");
