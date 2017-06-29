@@ -1,6 +1,11 @@
 import {RamlBackend, URIPattern} from "./RamlBackend";
 import {Http, RequestOptions} from "@angular/http";
 
+function absUri(path: string): string {
+  return "http://dummy-endpoint" + path;
+}
+
+
 describe("RamlBackend", () => {
 
   function createSubject(path: string = "./test-endpoints.raml"): RamlBackend {
@@ -22,7 +27,7 @@ describe("RamlBackend", () => {
 
     const http = new Http(subject, new RequestOptions());
 
-    http.get("http://dummy-endpoint/auth/token")
+    http.get(absUri("/auth/token"))
       .subscribe(resp => {
         expect(resp.json()).toEqual({name: "John Smith"});
       });
@@ -33,7 +38,7 @@ describe("RamlBackend", () => {
   it("takes method into account when looking for response", () => {
     const subject = createSubject(), http = new Http(subject, new RequestOptions());
 
-    http.post("http://dummy-endpoint/auth/token", {}).subscribe(resp => {
+    http.post(absUri("/auth/token"), {}).subscribe(resp => {
       expect(resp.status).toEqual(201);
       expect(resp.json()).toEqual({message: "created"});
     });
@@ -44,7 +49,7 @@ describe("RamlBackend", () => {
   it("uses the 0th example if there are more than one", () => {
     const subject = createSubject(), http = new Http(subject, new RequestOptions());
 
-    http.get("http://dummy-endpoint/create/whatever").subscribe(resp => {
+    http.get(absUri("/create/whatever")).subscribe(resp => {
       expect(resp.status).toEqual(200);
       expect(resp.json()).toEqual({name: "Alice"});
     });
@@ -55,15 +60,23 @@ describe("RamlBackend", () => {
   it("matches path parameters", () => {
     const subject = createSubject(), http = new Http(subject, new RequestOptions());
 
-    http.get("http://dummy-endpoint/person/123/456").subscribe(resp => {
+    http.get(absUri("/person/123/456")).subscribe(resp => {
       expect(resp.status).toEqual(200);
     });
 
     subject.verifyNoPendingRequests();
   });
 
-  it("checks invalid query parameters", () => {
+  fit("checks invalid query parameters", () => {
+    const subject = createSubject(), http = new Http(subject, new RequestOptions());
 
+    http.get(absUri("/queryparams?foo=bar&hello=world&invalid=asd"))
+      .subscribe(resp => {
+        expect(resp.status).toEqual(401);
+        expect(resp.json().message).toEqual("undeclared query parameter [invalid] found in request");
+      });
+
+    subject.verifyNoPendingRequests();
   });
 
   it("checks headers" , () => {
@@ -79,13 +92,8 @@ describe("RamlBackend", () => {
   });
 
 })
-
-
 describe("URIPattern", () => {
 
-  function absUri(path: string): string {
-    return "http://dummy-endpoint" + path;
-  }
 
   function createSubject(path: string): URIPattern {
     return new URIPattern(absUri(path));

@@ -48,3 +48,16 @@ types:
   get:
     responses:
       200:
+/queryparams:
+  get:
+    queryParameters:
+      foo:
+        type: string
+      hello:
+        type: string
+    responses:
+      200:
+        body:
+          type: Person
+          example:
+            name: "John Smith"

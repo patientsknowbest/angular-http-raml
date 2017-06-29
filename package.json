@@ -9,6 +9,7 @@
   "author": "Bence Eros <ebence88@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "query-string": "^4.3.4",
     "raml-1-parser": "^1.1.26"
   },
   "devDependencies": {
