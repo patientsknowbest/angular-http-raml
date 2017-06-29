@@ -1,4 +1,4 @@
-import {RamlBackend, URIPattern} from "./RamlBackend";
+import {RAMLBackend, URIPattern} from "./RAMLBackend";
 import {Http, RequestOptions} from "@angular/http";
 
 function absUri(path: string): string {
@@ -8,8 +8,8 @@ function absUri(path: string): string {
 
 describe("RamlBackend", () => {
 
-  function createSubject(path: string = "./test-endpoints.raml"): RamlBackend {
-    return new RamlBackend().loadRAMLFromPath(path);
+  function createSubject(path: string = "./test-endpoints.raml"): RAMLBackend {
+    return new RAMLBackend().loadRAMLFromPath(path);
   }
 
   it("loads absolute endpoints", () => {

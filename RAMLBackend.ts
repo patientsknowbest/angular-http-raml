@@ -155,7 +155,7 @@ function buildRequestPatterns(api: Api): RequestMatchEntry[] {
   return entries;
 }
 
-export class RamlBackend extends MockBackend {
+export class RAMLBackend extends MockBackend {
 
   private api: Api;
 
@@ -200,13 +200,13 @@ export class RamlBackend extends MockBackend {
     return endpoints;
   }
 
-  public loadRAMLFromPath(path: string): RamlBackend {
+  public loadRAMLFromPath(path: string): RAMLBackend {
     this.api = loadApiSync(path);
     this.matchEntries = buildRequestPatterns(this.api);
     return this;
   }
 
-  public loadRAML(content: string): RamlBackend {
+  public loadRAML(content: string): RAMLBackend {
     this.api = parseRAMLSync(content) as Api;
     this.matchEntries = buildRequestPatterns(this.api);
     return this;
