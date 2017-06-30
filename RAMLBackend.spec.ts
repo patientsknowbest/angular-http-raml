@@ -104,8 +104,12 @@ describe("URIPattern", () => {
 
 describe("explicit stubs", () => {
 
+  function initStubConfig() {
+    return RAMLBackendConfig.initWithFile("./stub-base.raml");
+  }
+
   it("overrides 'example' responses", ()  => {
-    const subject = RAMLBackendConfig.initWithFile("./stub-base.raml")
+    const subject = initStubConfig()
       .whenGET("/endpoint").thenRespond(new Response(new ResponseOptions({
         status: 200,
         body: JSON.stringify({access_token: 456})
@@ -121,21 +125,25 @@ describe("explicit stubs", () => {
 
   it("refuses invalid paths", () => {
     try {
-      RAMLBackendConfig.initWithFile("./stub-base.raml")
-        .whenGET("/nonexistent");
+      initStubConfig().whenGET("/nonexistent");
       fail("did not refuse nonexistent endpoint");
     } catch (e) {
       expect(e.message).toEqual("found no declaration of request [GET /nonexistent] in RAML - refusing to stub")
     }
   });
 
-  xit("refuses invalid methods", () => {
-
+  it("refuses invalid methods", () => {
+    try {
+      initStubConfig().whenHEAD("/endpoint");
+      fail("did not refuse undefined HEAD method")
+    } catch (e) {
+      expect(e.message).toEqual("found no declaration of request [HEAD /endpoint] in RAML - refusing to stub")
+    }
   });
 
   it("refuses invalid query params", () => {
     try {
-      const subject = RAMLBackendConfig.initWithFile("./stub-base.raml")
+      const subject = initStubConfig()
         .whenGET("/endpoint?qp0=val&foo=bar").thenRespond(new Response(new ResponseOptions({
           status: 200,
           body: JSON.stringify({access_token: 456})
@@ -145,6 +153,29 @@ describe("explicit stubs", () => {
     } catch (e) {
       expect(e.message).toEqual("undeclared query parameter [foo] found in request")
     }
+  });
+
+  it("fails if there is pending behavior (unset response)", () => {
+    try {
+      const subject = initStubConfig();
+      subject.whenGET("/endpoint");
+      subject.whenPOST("/endpoint");
+      fail("did not throw exception for unfinished behavior");
+    } catch (e) {
+      expect(e.message).toBe("unfinished behavior definition: cannot configure POST http://dummy-endpoint/endpoint " +
+        "before setting the response for GET http://dummy-endpoint/endpoint");
+    }
+  });
+
+  it("can chain multiple stubbing", () => {
+    initStubConfig().whenGET("/endpoint").thenRespond(new Response(new ResponseOptions({
+      status: 200, body: ""
+      })
+    )).whenPOST("/endpoint").thenRespond(new Response(new ResponseOptions({status: 201, body: "Created"})));
+  });
+
+  it("can stub POST requests", () => {
+    const subject = initStubConfig().whenPOST("/endpoint");
   });
 
 });

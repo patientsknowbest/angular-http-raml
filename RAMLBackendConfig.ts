@@ -2,7 +2,7 @@ import {Behavior, DefaultRequestValidator, NoopRequestValidator, RAMLBackend, Re
 import {loadApiSync} from "raml-1-parser/dist/raml1/artifacts/raml10parser";
 import {Api, TypeDeclaration} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
 import {parseRAMLSync} from "raml-1-parser";
-import {Request, Response, ResponseOptions} from "@angular/http";
+import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 
 export class InvalidStubbingError extends Error {
 
@@ -39,6 +39,8 @@ export class RAMLBackendConfig {
   private stubbed: Behavior[] = [];
 
   private expected: Behavior[] = [];
+
+  private pendingRequest: Request = null;
 
   constructor(private api: Api) {
     const entries : Behavior[] = [];
@@ -84,29 +86,51 @@ export class RAMLBackendConfig {
       requestPattern: requestPattern,
       requestValidator: new NoopRequestValidator()
     });
+    this.pendingRequest = null;
   }
 
   private onMockResponseAvailable(behavior: Behavior) {
     this.expected.push(behavior);
+    this.pendingRequest = null;
   }
 
   public whenGET(uri: string): ResponseSetter {
+    return this.when("get", uri);
+  }
+
+  public whenHEAD(uri: string): ResponseSetter {
+    return this.when("head", uri);
+  }
+
+  public whenPOST(uri: string): ResponseSetter {
+    return this.when("post", uri);
+  }
+
+  public when(method: string, path: string) {
     let validationError;
     const req = new Request({
-      method: "get",
-      url: this.api.baseUri().value() + uri
+      method: method,
+      url: this.api.baseUri().value() + path
     });
+    if (this.pendingRequest !== null) {
+      const pendingReqDescr = RequestMethod[this.pendingRequest.method].toUpperCase() + " " + this.pendingRequest.url;
+      const reqDescr = RequestMethod[req.method].toUpperCase() + " " + req.url;
+      throw new InvalidStubbingError("unfinished behavior definition: cannot configure "
+        + reqDescr + " before setting the response for " + pendingReqDescr);
+    }
+    this.pendingRequest = req;
     for (const i in this.defined)  {
       const behavior = this.defined[i];
       if (behavior.requestPattern.matches(req)) {
         if ((validationError = behavior.requestValidator.matches(req)) === null) {
-          return new ResponseSetter(this, response => this.onStubResponseAvailable(new RequestPattern(uri, "get"), response));
+          return new ResponseSetter(this, response => this.onStubResponseAvailable(new RequestPattern(path, method), response));
         } else {
           throw new InvalidStubbingError(validationError);
         }
       }
     }
-    throw new InvalidStubbingError("found no declaration of request [GET " + uri + "] in RAML - refusing to stub");
+    throw new InvalidStubbingError("found no declaration of request ["+ method.toUpperCase()
+      + " " + path + "] in RAML - refusing to stub");
   }
 
 
