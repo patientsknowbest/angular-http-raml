@@ -1,10 +1,7 @@
 import {MockBackend, MockConnection} from "@angular/http/testing";
-import {loadApiSync} from "raml-1-parser/dist/raml1/artifacts/raml10parser";
-import {Api, Method, TypeDeclaration} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
-import {parseRAMLSync} from "raml-1-parser";
+import {Method} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import {extract, parse} from "query-string";
-
 
 interface URIParams {
 
@@ -12,7 +9,13 @@ interface URIParams {
 
 }
 
-class RequestValidator {
+export interface RequestValidator {
+
+  matches(request: Request): string;
+
+}
+
+export class DefaultRequestValidator implements RequestValidator {
 
   private expectedQueryParams: string[] = [];
 
@@ -29,10 +32,18 @@ class RequestValidator {
       const actualQueryParams = this.parseQueryString(request.url);
       for (const paramName in actualQueryParams) {
         if (this.expectedQueryParams.indexOf(paramName) == -1) {
-          return "undeclared query parameter [invalid] found in request";
+          return "undeclared query parameter [" + paramName + "] found in request";
         }
       }
     }
+    return null;
+  }
+
+}
+
+export class NoopRequestValidator {
+
+  public matches(request: Request): string {
     return null;
   }
 
@@ -79,10 +90,10 @@ export class URIPattern {
   public matches(uri: string): URIParams {
     const matches = this.pattern.test(uri);
     const arr = this.pattern.exec(uri);
-    const paramMap: URIParams = {};
     if (arr === null) {
-      return paramMap;
+      return null;
     }
+    const paramMap: URIParams = {};
     for (let i = 0; i < this.paramNames.length; ++i) {
       paramMap[this.paramNames[i]] = arr[i + 1];
     }
@@ -113,63 +124,27 @@ export class RequestPattern {
   }
 }
 
-interface RequestMatchEntry {
+export interface Behavior {
 
   requestPattern: RequestPattern;
 
   response: Response;
 
-  requestValidator: RequestValidator;
+  requestValidator? : RequestValidator;
 
-}
-
-function lookupExampleResponseBody(respBodyDef: TypeDeclaration): string {
-  if (respBodyDef === undefined) {
-    return null;
-  }
-  if (respBodyDef.example() === null) {
-    return respBodyDef.examples()[0].value();
-  } else {
-    return respBodyDef.example().value();
-  }
-}
-
-function buildRequestPatterns(api: Api): RequestMatchEntry[] {
-  const entries : RequestMatchEntry[] = [];
-  for (const i in api.allResources()) {
-    const resource =  api.allResources()[i];
-    for (const j in resource.methods()) {
-      const method = resource.methods()[j];
-      const pattern = new RequestPattern(resource.absoluteUri(), method.method());
-      const response = new Response(new ResponseOptions({
-        status: new Number(method.responses()[0].code().value()).valueOf(),
-        body: lookupExampleResponseBody(method.responses()[0].body()[0])
-      }));
-      entries.push({
-        requestPattern: pattern,
-        response: response,
-        requestValidator: new RequestValidator(method)
-      });
-    }
-  }
-  return entries;
 }
 
 export class RAMLBackend extends MockBackend {
 
-  private api: Api;
-
-  private matchEntries: RequestMatchEntry[] = [];
-
-  constructor() {
+  constructor(private stubbed: Behavior[] = [], private expected: Behavior[] = []) {
     super();
     this.connections.subscribe(this.handleConnection.bind(this));
   }
 
 
   private findMatchingResponse(request: Request): MatchResult {
-    for (const i in this.matchEntries) {
-      const entry = this.matchEntries[i];
+    for (const i in this.stubbed) {
+      const entry = this.stubbed[i];
       let uriParams = entry.requestPattern.matches(request);
       if (uriParams !== null) {
         return new MatchResult(uriParams, entry.response, entry.requestValidator);
@@ -177,6 +152,7 @@ export class RAMLBackend extends MockBackend {
     }
     throw new Error("no matching request pattern found");
   }
+
   private handleConnection(conn: MockConnection) {
     const request = conn.request;
     let response;
@@ -192,24 +168,6 @@ export class RAMLBackend extends MockBackend {
       response = matchResult.response;
     }
     conn.mockRespond(response);
-  }
-
-  public get endpoints(): string[] {
-    const endpoints = [];
-    this.api.allResources().forEach(i => endpoints.push(i.absoluteUri()));
-    return endpoints;
-  }
-
-  public loadRAMLFromPath(path: string): RAMLBackend {
-    this.api = loadApiSync(path);
-    this.matchEntries = buildRequestPatterns(this.api);
-    return this;
-  }
-
-  public loadRAML(content: string): RAMLBackend {
-    this.api = parseRAMLSync(content) as Api;
-    this.matchEntries = buildRequestPatterns(this.api);
-    return this;
   }
 
 }

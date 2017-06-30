@@ -1,0 +1,20 @@
+#%RAML 1.0
+title: Test endpoints
+version: v0
+baseUri: http://dummy-endpoint
+mediaType: application/json
+/endpoint:
+  get:
+    queryParameters:
+      qp0:
+        type: string
+    responses:
+      200:
+        example:
+          access_token: 123
+  post:
+    responses:
+      201:
+        body:
+          example:
+            message: "created"

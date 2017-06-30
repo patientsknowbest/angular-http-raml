@@ -1,35 +1,26 @@
 import {RAMLBackend, URIPattern} from "./RAMLBackend";
-import {Http, RequestOptions} from "@angular/http";
+import {Http, Request, RequestOptions, Response, ResponseOptions} from "@angular/http";
+import {RAMLBackendConfig} from "./RAMLBackendConfig";
 
 function absUri(path: string): string {
   return "http://dummy-endpoint" + path;
 }
 
 
-describe("RamlBackend", () => {
+describe("RAMLBackend", () => {
 
   function createSubject(path: string = "./test-endpoints.raml"): RAMLBackend {
-    return new RAMLBackend().loadRAMLFromPath(path);
+    return RAMLBackendConfig.initWithFile(path)
+      .stubAll()
+      .createBackend();
   }
 
-  it("loads absolute endpoints", () => {
-    const subject = createSubject("./only-endpoints.raml");
-
-    expect(subject.endpoints).toEqual([
-      "http://dummy-endpoint/auth",
-      "http://dummy-endpoint/auth/token",
-      'http://dummy-endpoint/create/whatever'
-    ]);
-  });
-
   it("returns 200 with example for found endpoints", () => {
-    const subject = createSubject();
-
-    const http = new Http(subject, new RequestOptions());
+    const subject = createSubject(), http = new Http(subject, new RequestOptions());
 
     http.get(absUri("/auth/token"))
       .subscribe(resp => {
-        expect(resp.json()).toEqual({name: "John Smith"});
+        expect(resp.json()).toEqual({name: "John Snow"});
       });
 
     subject.verifyNoPendingRequests();
@@ -67,7 +58,7 @@ describe("RamlBackend", () => {
     subject.verifyNoPendingRequests();
   });
 
-  fit("checks invalid query parameters", () => {
+  it("checks invalid query parameters", () => {
     const subject = createSubject(), http = new Http(subject, new RequestOptions());
 
     http.get(absUri("/queryparams?foo=bar&hello=world&invalid=asd"))
@@ -79,19 +70,20 @@ describe("RamlBackend", () => {
     subject.verifyNoPendingRequests();
   });
 
-  it("checks headers" , () => {
+  xit("checks headers" , () => {
 
   });
 
-  it("checks the type of path params", () => {
+  xit("checks the type of path params", () => {
 
   });
 
-  it("no example, no examples", () => {
+  xit("no example, no examples", () => {
 
   });
 
-})
+});
+
 describe("URIPattern", () => {
 
 
@@ -106,6 +98,53 @@ describe("URIPattern", () => {
   it("returns param map for match", () => {
     const actual = createSubject("/person/{personId}/{otherParam}/dummy/{thirdParam}").matches(absUri("/person/123/foo/dummy/bar"));
     expect(actual).toEqual({personId: "123", otherParam: "foo", thirdParam: "bar"});
+  });
+
+});
+
+describe("explicit stubs", () => {
+
+  it("overrides 'example' responses", ()  => {
+    const subject = RAMLBackendConfig.initWithFile("./stub-base.raml")
+      .whenGET("/endpoint").thenRespond(new Response(new ResponseOptions({
+        status: 200,
+        body: JSON.stringify({access_token: 456})
+      })))
+      .createBackend();
+     const http = new Http(subject, new RequestOptions());
+
+     http.get("/endpoint").subscribe(resp => {
+       expect(resp.json()).toEqual({access_token: 456});
+   })
+
+  });
+
+  it("refuses invalid paths", () => {
+    try {
+      RAMLBackendConfig.initWithFile("./stub-base.raml")
+        .whenGET("/nonexistent");
+      fail("did not refuse nonexistent endpoint");
+    } catch (e) {
+      expect(e.message).toEqual("found no declaration of request [GET /nonexistent] in RAML - refusing to stub")
+    }
+  });
+
+  xit("refuses invalid methods", () => {
+
+  });
+
+  it("refuses invalid query params", () => {
+    try {
+      const subject = RAMLBackendConfig.initWithFile("./stub-base.raml")
+        .whenGET("/endpoint?qp0=val&foo=bar").thenRespond(new Response(new ResponseOptions({
+          status: 200,
+          body: JSON.stringify({access_token: 456})
+        })))
+        .createBackend();
+      fail("did not fail for invalid query parameter")
+    } catch (e) {
+      expect(e.message).toEqual("undeclared query parameter [foo] found in request")
+    }
   });
 
 });
