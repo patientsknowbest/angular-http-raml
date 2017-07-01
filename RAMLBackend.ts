@@ -116,12 +116,13 @@ export class RequestPattern {
   public matches(request: Request): URIParams {
     const actualMethod = RequestMethod[request.method].toLowerCase();
     const uriParams = this.expectedUri.matches(request.url);
-    if (! (actualMethod === this.expectedMethod
+    if (! (actualMethod.toLowerCase() === this.expectedMethod.toLowerCase()
       && uriParams !== null)) {
       return null;
     }
     return uriParams;
   }
+
 }
 
 export interface Behavior {
@@ -145,7 +146,7 @@ export class RAMLBackend extends MockBackend {
   private findMatchingResponse(request: Request): MatchResult {
     for (const i in this.stubbed) {
       const entry = this.stubbed[i];
-      let uriParams = entry.requestPattern.matches(request);
+      const uriParams = entry.requestPattern.matches(request);
       if (uriParams !== null) {
         return new MatchResult(uriParams, entry.response, entry.requestValidator);
       }

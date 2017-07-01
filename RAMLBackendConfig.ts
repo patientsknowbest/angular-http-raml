@@ -81,7 +81,7 @@ export class RAMLBackendConfig {
   }
 
   private onStubResponseAvailable(requestPattern: RequestPattern, response: Response) {
-    this.stubbed.push({
+    this.stubbed.unshift({
       response: response,
       requestPattern: requestPattern,
       requestValidator: new NoopRequestValidator()
@@ -128,13 +128,7 @@ export class RAMLBackendConfig {
       method: method,
       url: this.api.baseUri().value() + path
     });
-    if (this.pendingRequest !== null) {
-      const pendingReqDescr = RequestMethod[this.pendingRequest.method].toUpperCase() + " " + this.pendingRequest.url;
-      const reqDescr = RequestMethod[req.method].toUpperCase() + " " + req.url;
-      throw new InvalidStubbingError("unfinished behavior definition: cannot configure "
-        + reqDescr + " before setting the response for " + pendingReqDescr);
-    }
-    this.pendingRequest = req;
+    this.markRequestAsPending(req);
     for (const i in this.defined)  {
       const behavior = this.defined[i];
       if (behavior.requestPattern.matches(req)) {
@@ -149,6 +143,19 @@ export class RAMLBackendConfig {
       + " " + path + "] in RAML - refusing to stub");
   }
 
+  private markRequestAsPending(req: Request) {
+    if (this.pendingRequest !== null) {
+      const pendingReqDescr = RequestMethod[this.pendingRequest.method].toUpperCase() + " " + this.pendingRequest.url;
+      const reqDescr = RequestMethod[req.method].toUpperCase() + " " + req.url;
+      throw new InvalidStubbingError("unfinished behavior definition: cannot configure "
+        + reqDescr + " before setting the response for " + pendingReqDescr);
+    }
+    this.pendingRequest = req;
+  }
+
+  // public whenRequestIs(request: Request): ResponseSetter {
+  //
+  // }
 
   public createBackend(): RAMLBackend {
     return new RAMLBackend(this.stubbed, this.expected);

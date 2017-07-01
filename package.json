@@ -23,6 +23,7 @@
     "gulp": "^3.9.1",
     "gulp-jasmine": "^2.4.2",
     "gulp-sourcemaps": "^2.6.0",
+    "gulp-typedoc": "^2.0.2",
     "gulp-typescript": "^3.1.7",
     "is-stream": "^1.1.0",
     "is-valid-glob": "^1.0.0",
@@ -38,6 +39,7 @@
     "strip-bom-stream": "^3.0.0",
     "through2-filter": "^2.0.0",
     "to-absolute-glob": "^2.0.1",
+    "typedoc": "^0.7.1",
     "typescript": "^2.3.4",
     "util-deprecate": "^1.0.2",
     "vali-date": "^1.0.0"

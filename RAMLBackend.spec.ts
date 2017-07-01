@@ -111,7 +111,7 @@ describe("URIPattern", () => {
 describe("explicit stubs", () => {
 
   function initStubConfig() {
-    return RAMLBackendConfig.initWithFile("./stub-base.raml");
+    return RAMLBackendConfig.initWithFile("./stub-base.raml").stubAll();
   }
 
   it("overrides 'example' responses", ()  => {
@@ -123,7 +123,7 @@ describe("explicit stubs", () => {
       .createBackend();
      const http = new Http(subject, new RequestOptions());
 
-     http.get("/endpoint").subscribe(resp => {
+     http.get(absUri("/endpoint")).subscribe(resp => {
        expect(resp.json()).toEqual({access_token: 456});
    })
 
@@ -233,6 +233,10 @@ describe("explicit stubs", () => {
     });
 
     subject.verifyNoPendingRequests();
+  });
+
+  it("can stub entire request patterns", () => {
+
   });
 
 });
