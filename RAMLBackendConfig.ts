@@ -153,9 +153,23 @@ export class RAMLBackendConfig {
     this.pendingRequest = req;
   }
 
-  // public whenRequestIs(request: Request): ResponseSetter {
-  //
-  // }
+  public whenRequestIs(request: Request): ResponseSetter {
+    const path = request.url, method =  RequestMethod[request.method];
+    let validationError;
+    this.markRequestAsPending(request);
+    for (const i in this.defined)  {
+      const behavior = this.defined[i];
+      if (behavior.requestPattern.matches(request)) {
+        if ((validationError = behavior.requestValidator.matches(request)) === null) {
+          return new ResponseSetter(this, response => this.onStubResponseAvailable(new RequestPattern(path, method), response));
+        } else {
+          throw new InvalidStubbingError(validationError);
+        }
+      }
+    }
+    throw new InvalidStubbingError("found no declaration of request ["+ method.toUpperCase()
+      + " " + path + "] in RAML - refusing to stub");
+  }
 
   public createBackend(): RAMLBackend {
     return new RAMLBackend(this.stubbed, this.expected);

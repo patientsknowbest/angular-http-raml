@@ -235,8 +235,24 @@ describe("explicit stubs", () => {
     subject.verifyNoPendingRequests();
   });
 
-  it("can stub entire request patterns", () => {
+  it("can stub entire requests", () => {
+    const request = new Request({
+      method: "post",
+      url: absUri("/endpoint"),
+      body: {foo: "bar"}
+    });
+    const response = new Response(new ResponseOptions({
+      status: 201,
+      body: JSON.stringify({message: "created"})
+    }));
+    const subject = initStubConfig().whenRequestIs(request).thenRespond(response).createBackend();
+    const http = new Http(subject, new RequestOptions());
 
+    http.post(absUri("/endpoint"), {foo :"bar"}).subscribe(resp => {
+      expect(resp).toEqual(response);
+    });
+
+    subject.verifyNoPendingRequests();
   });
 
 });
