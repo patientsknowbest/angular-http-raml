@@ -6,6 +6,12 @@ function absUri(path: string): string {
   return "http://dummy-endpoint" + path;
 }
 
+function ok() {
+  return new Response(new ResponseOptions({
+    status: 200,
+    body: ""
+  }));
+}
 
 describe("RAMLBackend", () => {
 
@@ -175,7 +181,58 @@ describe("explicit stubs", () => {
   });
 
   it("can stub POST requests", () => {
-    const subject = initStubConfig().whenPOST("/endpoint");
+    const subject = initStubConfig().whenPOST("/endpoint").thenRespond(ok()).createBackend();
+    const http = new Http(subject, new RequestOptions());
+
+    http.post("/endpoint", {}).subscribe(resp => {
+      expect(resp.ok).toBe(true);
+    });
+
+    subject.verifyNoPendingRequests();
+  });
+
+  it("can stub PUT requests", () => {
+    const subject = initStubConfig().whenPUT("/endpoint").thenRespond(ok()).createBackend();
+    const http = new Http(subject, new RequestOptions());
+
+    http.put("/endpoint", {}).subscribe(resp => {
+      expect(resp.ok).toBe(true);
+    });
+
+    subject.verifyNoPendingRequests();
+  });
+
+  it("can stub DELETE requests", () => {
+    const subject = initStubConfig().whenDELETE("/endpoint").thenRespond(ok()).createBackend();
+    const http = new Http(subject, new RequestOptions());
+
+    http.delete("/endpoint").subscribe(resp => {
+      expect(resp.ok).toBe(true);
+    });
+
+    subject.verifyNoPendingRequests();
+  });
+
+  it("can stub PATCH requests", () => {
+    const subject = initStubConfig().whenPATCH("/endpoint").thenRespond(ok()).createBackend();
+    const http = new Http(subject, new RequestOptions());
+
+    http.patch("/endpoint", {}).subscribe(resp => {
+      expect(resp.ok).toBe(true);
+    });
+
+    subject.verifyNoPendingRequests();
+  });
+
+  it("can stub OPTIONS requests", () => {
+    const subject = initStubConfig().whenOPTIONS("/endpoint").thenRespond(ok()).createBackend();
+    const http = new Http(subject, new RequestOptions());
+
+    http.options("/endpoint", {}).subscribe(resp => {
+      expect(resp.ok).toBe(true);
+    });
+
+    subject.verifyNoPendingRequests();
   });
 
 });

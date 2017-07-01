@@ -106,6 +106,22 @@ export class RAMLBackendConfig {
     return this.when("post", uri);
   }
 
+  public whenPUT(uri: string): ResponseSetter {
+    return this.when("put", uri);
+  }
+
+  public whenDELETE(uri: string): ResponseSetter {
+    return this.when("delete", uri);
+  }
+
+  public whenPATCH(uri: string): ResponseSetter {
+    return this.when("patch", uri);
+  }
+
+  public whenOPTIONS(uri: string): ResponseSetter {
+    return this.when("options", uri);
+  }
+
   public when(method: string, path: string) {
     let validationError;
     const req = new Request({
