@@ -10,7 +10,8 @@
   "license": "MIT",
   "dependencies": {
     "query-string": "^4.3.4",
-    "raml-1-parser": "^1.1.26"
+    "raml-1-parser": "^1.1.26",
+    "url-parse": "^1.1.9"
   },
   "devDependencies": {
     "@angular/common": "^4.2.4",

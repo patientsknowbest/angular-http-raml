@@ -3,6 +3,8 @@ import {loadApiSync} from "raml-1-parser/dist/raml1/artifacts/raml10parser";
 import {Api, TypeDeclaration} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
 import {parseRAMLSync} from "raml-1-parser";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
+import URL = require("url-parse");
+
 
 export class InvalidStubbingError extends Error {
 
@@ -94,53 +96,57 @@ export class RAMLBackendConfig {
     this.pendingRequest = null;
   }
 
+  private absoluteUri(path: string): string {
+    return this.api.baseUri().value() + path;
+  }
+
   public whenGET(uri: string): ResponseSetter {
-    return this.when("get", uri);
+    return this.whenRequestIs(new Request({
+      method: "get",
+      url: this.absoluteUri(uri)
+    }));
   }
 
   public whenHEAD(uri: string): ResponseSetter {
-    return this.when("head", uri);
+    return this.whenRequestIs(new Request({
+      method: "head",
+      url: this.absoluteUri(uri)
+    }));
   }
 
   public whenPOST(uri: string): ResponseSetter {
-    return this.when("post", uri);
+    return this.whenRequestIs(new Request({
+      method: "post",
+      url: this.absoluteUri(uri)
+    }));
   }
 
   public whenPUT(uri: string): ResponseSetter {
-    return this.when("put", uri);
+    return this.whenRequestIs(new Request({
+      method: "put",
+      url: this.absoluteUri(uri)
+    }));
   }
 
   public whenDELETE(uri: string): ResponseSetter {
-    return this.when("delete", uri);
+    return this.whenRequestIs(new Request({
+      method: "delete",
+      url: this.absoluteUri(uri)
+    }));
   }
 
   public whenPATCH(uri: string): ResponseSetter {
-    return this.when("patch", uri);
+    return this.whenRequestIs(new Request({
+      method: "patch",
+      url: this.absoluteUri(uri)
+    }));
   }
 
   public whenOPTIONS(uri: string): ResponseSetter {
-    return this.when("options", uri);
-  }
-
-  public when(method: string, path: string) {
-    let validationError;
-    const req = new Request({
-      method: method,
-      url: this.api.baseUri().value() + path
-    });
-    this.markRequestAsPending(req);
-    for (const i in this.defined)  {
-      const behavior = this.defined[i];
-      if (behavior.requestPattern.matches(req)) {
-        if ((validationError = behavior.requestValidator.matches(req)) === null) {
-          return new ResponseSetter(this, response => this.onStubResponseAvailable(new RequestPattern(path, method), response));
-        } else {
-          throw new InvalidStubbingError(validationError);
-        }
-      }
-    }
-    throw new InvalidStubbingError("found no declaration of request ["+ method.toUpperCase()
-      + " " + path + "] in RAML - refusing to stub");
+    return this.whenRequestIs(new Request({
+      method: "options",
+      url: this.absoluteUri(uri)
+    }));
   }
 
   private markRequestAsPending(req: Request) {
@@ -153,8 +159,14 @@ export class RAMLBackendConfig {
     this.pendingRequest = req;
   }
 
+  private relativePath(absoluteUri: string): string {
+    const url = new URL(absoluteUri);
+    return url.pathname + url.query + url.hash;
+  }
+
   public whenRequestIs(request: Request): ResponseSetter {
-    const path = request.url, method =  RequestMethod[request.method];
+    const path = this.relativePath(request.url), method =  RequestMethod[request.method];
+
     let validationError;
     this.markRequestAsPending(request);
     for (const i in this.defined)  {
