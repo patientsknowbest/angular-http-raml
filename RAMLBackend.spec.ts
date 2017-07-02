@@ -257,7 +257,7 @@ describe("explicit stubs", () => {
 
 });
 
-fdescribe("response selection", () => {
+describe("response selection", () => {
 
   it("returns the lowest 2xx response by default", () => {
     const subject = RAMLBackendConfig.initWithFile("./status-codes.raml")
@@ -286,10 +286,13 @@ fdescribe("response selection", () => {
 
   });
 
-  // it("throws exception if no resp found with status code", () => {
-  //   try {
-  //     RAMLBackendConfig.initWithFile("./status-code")
-  //   }
-  // });
+  it("throws exception if no resp found with status code", () => {
+    try {
+      RAMLBackendConfig.initWithFile("./status-codes.raml").whenGET("/endpoint").thenRespondWith(555);
+      fail("did not throw exception for undefined response")
+    } catch (e) {
+      expect(e.message).toEqual("there is no response defined with status code 555 in the RAML file");
+    }
+  });
 
 });

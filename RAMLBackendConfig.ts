@@ -117,7 +117,7 @@ export class RAMLBackendConfig {
         return this.buildResponseFromDefinition(possibleResponseDefs[i]);
       }
     }
-    throw "not found";
+    throw new InvalidStubbingError("there is no response defined with status code " + statusCode + " in the RAML file");
   }
 
   private lookupResponseDefsByRequest(request: Request): ResponseDef[] {
