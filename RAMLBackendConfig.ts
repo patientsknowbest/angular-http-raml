@@ -1,9 +1,10 @@
 import {Behavior, DefaultRequestValidator, NoopRequestValidator, RAMLBackend, RequestPattern} from "./RAMLBackend";
 import {loadApiSync} from "raml-1-parser/dist/raml1/artifacts/raml10parser";
-import {Api, TypeDeclaration} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
+import {Api, TypeDeclaration, Response as ResponseDef} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
 import {parseRAMLSync} from "raml-1-parser";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import URL = require("url-parse");
+import {ResourceMap} from "typedoc/dist/lib/output/utils/resources/stack";
 
 
 export class InvalidStubbingError extends Error {
@@ -22,6 +23,12 @@ export class ResponseSetter {
     return this.owner;
   }
 
+  public thenRespondWith(statusCode: number): RAMLBackendConfig {
+    const response = this.owner.lookupResponseByCode(statusCode);
+    this.onReady(response);
+    return this.owner;
+  }
+
 }
 
 export class RAMLBackendConfig {
@@ -34,6 +41,22 @@ export class RAMLBackendConfig {
   static initWithDefinition(definition: string): RAMLBackendConfig {
     const api = parseRAMLSync(definition) as Api;
     return new RAMLBackendConfig(api);
+  }
+
+  private static findBestDummyResponse(responses: ResponseDef[]): ResponseDef {
+    let bestFittingResp: ResponseDef = null;
+    for (const i in responses) {
+      const candidate = responses[i];
+      const statusCode = Number.parseInt(candidate.code().value());
+      if (200 <= statusCode && statusCode < 300) {
+        if (bestFittingResp === null) {
+          bestFittingResp = candidate;
+        } else if (Number.parseInt(bestFittingResp.code().value()) > statusCode) {
+          bestFittingResp = candidate;
+        }
+      }
+    }
+    return bestFittingResp;
   }
 
   private defined: Behavior[] = [];
@@ -52,10 +75,8 @@ export class RAMLBackendConfig {
       for (const j in resource.methods()) {
         const method = resource.methods()[j];
         const pattern = new RequestPattern(resourceUri, method.method());
-        const response = new Response(new ResponseOptions({
-          status: new Number(method.responses()[0].code().value()).valueOf(),
-          body: this.lookupExampleResponseBody(method.responses()[0].body()[0])
-        }));
+        const responseDefinition: ResponseDef = RAMLBackendConfig.findBestDummyResponse(method.responses());
+        const response = this.buildResponseFromDefinition(responseDefinition);
         entries.push({
           requestPattern: pattern,
           response: response,
@@ -64,6 +85,13 @@ export class RAMLBackendConfig {
       }
     }
     this.defined = entries;
+  }
+
+  private buildResponseFromDefinition(responseDefinition: ResponseDef) {
+    return new Response(new ResponseOptions({
+      status: new Number(responseDefinition.code().value()).valueOf(),
+      body: this.lookupExampleResponseBody(responseDefinition.body()[0])
+    }));
   }
 
   public stubAll(): RAMLBackendConfig {
@@ -80,6 +108,29 @@ export class RAMLBackendConfig {
     } else {
       return respBodyDef.example().value();
     }
+  }
+
+  public lookupResponseByCode(statusCode: number): Response {
+    const possibleResponseDefs = this.lookupResponseDefsByRequest(this.pendingRequest);
+    for (const i in possibleResponseDefs) {
+      if (Number.parseInt(possibleResponseDefs[i].code().value()) === statusCode) {
+        return this.buildResponseFromDefinition(possibleResponseDefs[i]);
+      }
+    }
+    throw "not found";
+  }
+
+  private lookupResponseDefsByRequest(request: Request): ResponseDef[] {
+    for (const i in this.api.resources()) {
+      const res = this.api.resources()[i];
+      for (const j in res.methods()) {
+        const pattern = new RequestPattern(res.absoluteUri(), res.methods()[j].method());
+        if (pattern.matches(request)) {
+          return res.methods()[j].responses();
+        }
+      }
+    }
+    throw "not found";
   }
 
   private onStubResponseAvailable(requestPattern: RequestPattern, response: Response) {

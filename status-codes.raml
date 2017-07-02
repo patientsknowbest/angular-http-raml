@@ -1,0 +1,15 @@
+#%RAML 1.0
+title: Endpoints for testing response selection based on status codes
+version: v0
+baseUri: http://dummy-endpoint
+mediaType: application/json
+/endpoint:
+  get:
+    responses:
+      404:
+      500:
+        body:
+          example:
+            message: "internal server error"
+      201:
+      200:

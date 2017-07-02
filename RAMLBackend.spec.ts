@@ -256,3 +256,40 @@ describe("explicit stubs", () => {
   });
 
 });
+
+fdescribe("response selection", () => {
+
+  it("returns the lowest 2xx response by default", () => {
+    const subject = RAMLBackendConfig.initWithFile("./status-codes.raml")
+      .stubAll()
+      .createBackend();
+    const http = new Http(subject, new RequestOptions());
+
+    http.get(absUri("/endpoint")).subscribe(resp => {
+      expect(resp.status).toBe(200);
+    });
+  });
+
+  it("can stub response by only status code", () => {
+    const subject = RAMLBackendConfig.initWithFile("./status-codes.raml")
+      .whenGET("/endpoint").thenRespondWith(500)
+      .createBackend();
+    const http = new Http(subject, new RequestOptions());
+
+    http.get("/endpoint").subscribe(resp => {
+      expect(resp.status).toBe(500);
+      expect(resp.json()).toEqual({message:"internal server error"});
+    });
+  });
+
+  it("can stub by only status code and example id", () => {
+
+  });
+
+  // it("throws exception if no resp found with status code", () => {
+  //   try {
+  //     RAMLBackendConfig.initWithFile("./status-code")
+  //   }
+  // });
+
+});

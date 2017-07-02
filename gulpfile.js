@@ -2,7 +2,7 @@ const gulp = require("gulp");
 const tsc = require("gulp-typescript");
 const sourcemaps = require("gulp-sourcemaps");
 const jasmine = require("gulp-jasmine");
-
+const typedoc = require("gulp-typedoc");
 
 
 
@@ -44,4 +44,17 @@ gulp.task("test-compile", (done) => {
 
 gulp.task("test", ["test-compile"], (done) => {
   gulp.src("dist/*.spec.js").pipe(jasmine());
+});
+
+
+gulp.task("typedoc", ["compile"], (done) => {
+  return gulp
+    .src(["./RAMLBackend.ts"])
+    .pipe(typedoc({
+      module: "commonjs",
+      target: "es5",
+      out: "docs/",
+      name: "My project title"
+    }))
+    ;
 });
