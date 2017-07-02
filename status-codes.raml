@@ -12,4 +12,11 @@ mediaType: application/json
           example:
             message: "internal server error"
       201:
+        body:
+          examples:
+            withoutEntityId:
+              message: "created"
+            withEntityId:
+              message: "created"
+              entityId: 42
       200:

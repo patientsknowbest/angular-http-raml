@@ -1,6 +1,6 @@
 import {RAMLBackend, URIPattern} from "./RAMLBackend";
 import {Http, Request, RequestOptions, Response, ResponseOptions} from "@angular/http";
-import {RAMLBackendConfig} from "./RAMLBackendConfig";
+import {InvalidStubbingError, RAMLBackendConfig} from "./RAMLBackendConfig";
 
 function absUri(path: string): string {
   return "http://dummy-endpoint" + path;
@@ -280,10 +280,41 @@ describe("response selection", () => {
       expect(resp.status).toBe(500);
       expect(resp.json()).toEqual({message:"internal server error"});
     });
+
+    subject.verifyNoPendingRequests();
   });
 
   it("can stub by only status code and example id", () => {
+    const subject = RAMLBackendConfig.initWithFile("./status-codes.raml")
+      .whenGET("/endpoint").thenRespondWith(201, "withEntityId")
+      .createBackend();
+    const http = new Http(subject, new RequestOptions());
 
+    http.get("/endpoint").subscribe(resp => {
+      expect(resp.json()).toEqual({message: "created", entityId: 42});
+    });
+
+    subject.verifyNoPendingRequests();
+  });
+
+  it("throws exception if no examples are defined", () => {
+    try {
+      const subject = RAMLBackendConfig.initWithFile("./status-codes.raml")
+        .whenGET("/endpoint").thenRespondWith(200, "notFound")
+      fail("did not throw exception");
+    } catch (e) {
+      expect(e).toEqual(new InvalidStubbingError("could not find example [notFound]"));
+    }
+  });
+
+  it("throws exception if no examples are defined", () => {
+    try {
+      const subject = RAMLBackendConfig.initWithFile("./status-codes.raml")
+        .whenGET("/endpoint").thenRespondWith(201, "notFound")
+      fail();
+    } catch (e) {
+      expect(e).toEqual(new InvalidStubbingError("could not find example [notFound]"));
+    }
   });
 
   it("throws exception if no resp found with status code", () => {

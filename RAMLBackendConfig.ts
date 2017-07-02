@@ -23,8 +23,8 @@ export class ResponseSetter {
     return this.owner;
   }
 
-  public thenRespondWith(statusCode: number): RAMLBackendConfig {
-    const response = this.owner.lookupResponseByCode(statusCode);
+  public thenRespondWith(statusCode: number, exampleIdentifier?: string): RAMLBackendConfig {
+    const response = this.owner.lookupResponse(statusCode, exampleIdentifier);
     this.onReady(response);
     return this.owner;
   }
@@ -87,10 +87,10 @@ export class RAMLBackendConfig {
     this.defined = entries;
   }
 
-  private buildResponseFromDefinition(responseDefinition: ResponseDef) {
+  private buildResponseFromDefinition(responseDefinition: ResponseDef, exampleIdentifier?: string) {
     return new Response(new ResponseOptions({
       status: new Number(responseDefinition.code().value()).valueOf(),
-      body: this.lookupExampleResponseBody(responseDefinition.body()[0])
+      body: this.lookupExampleResponseBody(responseDefinition.body()[0], exampleIdentifier)
     }));
   }
 
@@ -99,22 +99,41 @@ export class RAMLBackendConfig {
     return this;
   }
 
-  private lookupExampleResponseBody(respBodyDef: TypeDeclaration): string {
+  private lookupExampleResponseBody(respBodyDef: TypeDeclaration, exampleIdentifier?: string): string {
+    function throwError() {
+      throw new InvalidStubbingError("could not find example [" + exampleIdentifier + "]");
+    }
     if (respBodyDef === undefined) {
+      if (exampleIdentifier != null) {
+        throwError();
+      }
       return null;
     }
+    const exampleDefs = respBodyDef.examples();
+    if (exampleIdentifier != null) {
+      if (exampleDefs == null || exampleDefs.length === 0) {
+        throwError();
+      }
+      for (const i in exampleDefs) {
+        const example = exampleDefs[i];
+        if (example.name() === exampleIdentifier) {
+          return example.value();
+        }
+      }
+      throwError();
+    }
     if (respBodyDef.example() === null) {
-      return respBodyDef.examples()[0].value();
+      return exampleDefs[0].value();
     } else {
       return respBodyDef.example().value();
     }
   }
 
-  public lookupResponseByCode(statusCode: number): Response {
+  public lookupResponse(statusCode: number, exampleIdentifier: string): Response {
     const possibleResponseDefs = this.lookupResponseDefsByRequest(this.pendingRequest);
     for (const i in possibleResponseDefs) {
       if (Number.parseInt(possibleResponseDefs[i].code().value()) === statusCode) {
-        return this.buildResponseFromDefinition(possibleResponseDefs[i]);
+        return this.buildResponseFromDefinition(possibleResponseDefs[i], exampleIdentifier);
       }
     }
     throw new InvalidStubbingError("there is no response defined with status code " + statusCode + " in the RAML file");
