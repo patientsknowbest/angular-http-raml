@@ -1,10 +1,9 @@
 import {Behavior, DefaultRequestValidator, NoopRequestValidator, RAMLBackend, RequestPattern} from "./RAMLBackend";
 import {loadApiSync} from "raml-1-parser/dist/raml1/artifacts/raml10parser";
-import {Api, TypeDeclaration, Response as ResponseDef} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
+import {Api, Response as ResponseDef, TypeDeclaration} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
 import {parseRAMLSync} from "raml-1-parser";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import URL = require("url-parse");
-import {ResourceMap} from "typedoc/dist/lib/output/utils/resources/stack";
 
 
 export class InvalidStubbingError extends Error {

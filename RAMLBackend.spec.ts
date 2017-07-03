@@ -134,7 +134,7 @@ describe("explicit stubs", () => {
       initStubConfig().whenGET("/nonexistent");
       fail("did not refuse nonexistent endpoint");
     } catch (e) {
-      expect(e.message).toEqual("found no declaration of request [GET /nonexistent] in RAML - refusing to stub")
+      expect(e).toEqual(new InvalidStubbingError("found no declaration of request [GET /nonexistent] in RAML - refusing to stub"))
     }
   });
 
@@ -143,7 +143,7 @@ describe("explicit stubs", () => {
       initStubConfig().whenHEAD("/endpoint");
       fail("did not refuse undefined HEAD method")
     } catch (e) {
-      expect(e.message).toEqual("found no declaration of request [HEAD /endpoint] in RAML - refusing to stub")
+      expect(e).toEqual(new InvalidStubbingError("found no declaration of request [HEAD /endpoint] in RAML - refusing to stub"))
     }
   });
 
@@ -157,7 +157,7 @@ describe("explicit stubs", () => {
         .createBackend();
       fail("did not fail for invalid query parameter")
     } catch (e) {
-      expect(e.message).toEqual("undeclared query parameter [foo] found in request")
+      expect(e).toEqual(new InvalidStubbingError("undeclared query parameter [foo] found in request"));
     }
   });
 
@@ -168,8 +168,8 @@ describe("explicit stubs", () => {
       subject.whenPOST("/endpoint");
       fail("did not throw exception for unfinished behavior");
     } catch (e) {
-      expect(e.message).toBe("unfinished behavior definition: cannot configure POST http://dummy-endpoint/endpoint " +
-        "before setting the response for GET http://dummy-endpoint/endpoint");
+      expect(e).toEqual(new InvalidStubbingError("unfinished behavior definition: cannot configure POST http://dummy-endpoint/endpoint " +
+        "before setting the response for GET http://dummy-endpoint/endpoint"));
     }
   });
 
@@ -322,7 +322,7 @@ describe("response selection", () => {
       RAMLBackendConfig.initWithFile("./status-codes.raml").whenGET("/endpoint").thenRespondWith(555);
       fail("did not throw exception for undefined response")
     } catch (e) {
-      expect(e.message).toEqual("there is no response defined with status code 555 in the RAML file");
+      expect(e).toEqual(new InvalidStubbingError("there is no response defined with status code 555 in the RAML file"));
     }
   });
 
