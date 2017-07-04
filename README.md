@@ -4,7 +4,7 @@
 
 - [angular-http-raml](#angular-http-raml)
   - [Installation](#installation)
-  - [Usage](#usage)
+  - [Stubbing](#stubbing)
     - [Prerequisities:](#prerequisities)
     - [Quickstart](#quickstart)
     - [Customizing stubbing](#customizing-stubbing)
@@ -12,7 +12,7 @@
       - [Using an other example response body](#using-an-other-example-response-body)
       - [Passing an entire request](#passing-an-entire-request)
       - [Safety nets while mocking](#safety-nets-while-mocking)
-    - [Generating Mocks instead of Stubs](#generating-mocks-instead-of-stubs)
+  - [Mocking](#mocking)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -27,7 +27,7 @@ an angular Http object which speaks the same language as the API you defined.
 
 TODO
 
-## Usage
+## Stubbing
 
 ### Prerequisities:
 
@@ -57,6 +57,8 @@ mediaType: application/json
   get:
     responses:
       200:
+        queryParameters:
+          activeOnly: boolean 
         body:
           example:
             - email: "testuser@example.com"
@@ -187,7 +189,7 @@ If the above two methods of overriding default responses - eg. because the respo
 pecify the entire request to be sent back from the server by calling `thenRespond()` instead of `thenRespondWith()` :
 
 ```
-const mockBackend = initStubConfig()
+const mockBackend = RAMLBackendConfig.initWithFile("./person-api.raml")
       .whenGET("/person/123/emails").thenRespond(new Response(new ResponseOptions({
         status: 200,
         body: JSON.stringify([{email:null, active: false}]);
@@ -197,8 +199,27 @@ const mockBackend = initStubConfig()
 
 #### Safety nets while mocking
 
+One thing that can go wrong while stubbing - or creating any kind of test double - is mimicing false behavior of the stubbed system. As a simple example, if you mistype a request path in your
+test, then you implement a service that conforms to the test, then your test will pass, but your service still won't be compatible with your backend.
+
+To minimize the risk of such problems, `angular-http-raml` validates your stubbed requests, so it checks if you properly mimic the behavior of the remote service. In the below example the stub
+request contains a query parameter called `onlyActive`, but since this query parameter is not included in the RAML definition, an `InvalidStubbingError` will be thrown:
+
+```
+const mockBackend = RAMLBackendConfig.initWithFile("./person-api.raml")
+ // thow will throw an InvalidStubbingError immediately,
+ // since "onlyActive" is not a valid query param
+  .whenGET("/person/123/emails?onlyActive=true").thenRespond(200)
+  .createBackend();
+``` 
+
+Similarly, eg. if you try to stub a request which doesn't match any path patterns then an error is thrown.
+
+Does it mean that you can't have any compatibility issues with server-client communication? Of course, not.
+The library conforms to your RAML documentation and not to your real server. To take a full advantage of RAML, it is recommended to involve the same file in testing your backend, so the contract
+is verified from both ends. This library can help you with only the half of the job. 
 
 
-### Generating Mocks instead of Stubs
+## Mocking
 
 TODO
