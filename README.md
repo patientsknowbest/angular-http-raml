@@ -1,3 +1,21 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [angular-http-raml](#angular-http-raml)
+  - [Installation](#installation)
+  - [Usage](#usage)
+    - [Prerequisities:](#prerequisities)
+    - [Quickstart](#quickstart)
+    - [Customizing stubbing](#customizing-stubbing)
+      - [Changing the response by response code](#changing-the-response-by-response-code)
+      - [Using an other example response body](#using-an-other-example-response-body)
+      - [Passing an entire request](#passing-an-entire-request)
+      - [Safety nets while mocking](#safety-nets-while-mocking)
+    - [Generating Mocks instead of Stubs](#generating-mocks-instead-of-stubs)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # angular-http-raml
 
 This library provides a [RAML](http://raml.org) RAML-based `MockBackend` generator for testing Angular 4 applications.
@@ -63,7 +81,7 @@ _my-service.ts_:
 
 export class MyService {
   
-  constructor(private @Inject() http: Http) {}
+  constructor(private http: Http) {}
   
   public fetchPersonEmails(personId: number): Observable<string[]> {
     return http.get("http://api.example.com/person/" + personId + "/emails")
@@ -116,6 +134,68 @@ few lines.
 
 ### Customizing stubbing
 
+#### Changing the response by response code
+
+
+RAML lets you describe responses with multiple response codes. By default, angular-http-raml will choose the response with the lowest 2xx status code, but you can simply
+override this behavior. Example (using the above listed `person-api.raml`):
+
+```
+// ...
+  const mockBackend = RAMLBackendConfig.initWithFile("./person-api.raml")
+   .stubAll()
+   .whenGET("/person/123/emails").thenRespondWith(404)
+   .createBackend();
+// ...
+```
+
+This configuration will override the default stubbing and tell the RAMLBackend to send the 404 response instead of the default 200. The response body will be `{"message":"not found"}`
+as it is defined in the RAML file.
+
+#### Using an other example response body
+ 
+RAML lets you define multiple example response bodies for a response. angular-http-raml lets you easily switch between them. Let's consider the following RAML definition of an endpoint:
+
+``` 
+/person/{personId}/emails:
+  get:
+    responses:
+      200:
+        body:
+          examples:
+            hasEmails:
+              - email: "testuser@example.com"
+                active: true
+              - email: "test.user@example.com"
+                active: false
+            emptyList: []
+```
+
+In this RAML definition there are 2 example responses (both with 200 response code). They are called `hasEmails` and `emptyList`. By default the `RAMLBackend` instance would return the 
+first example response it finds (`hasEmails`), override it by passing `emptyList` as the 2nd parameter of `thenRespondWith()`:
+
+```
+const mockBackend = RAMLBackendConfig.initWithFile("./person-api.raml")
+  .stubAll()
+  .whenGET("/person/123/emails").thenRespondWith(404, "emptyList")
+  .createBackend();
+```
+
+#### Passing an entire request
+
+If the above two methods of overriding default responses - eg. because the response body you want to test with is different from the examples available in RAML - then you can explicitly
+pecify the entire request to be sent back from the server by calling `thenRespond()` instead of `thenRespondWith()` :
+
+```
+const mockBackend = initStubConfig()
+      .whenGET("/person/123/emails").thenRespond(new Response(new ResponseOptions({
+        status: 200,
+        body: JSON.stringify([{email:null, active: false}]);
+      })))
+      .createBackend();
+``` 
+
+#### Safety nets while mocking
 
 
 
