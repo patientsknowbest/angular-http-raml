@@ -18,7 +18,7 @@
 
 # angular-http-raml
 
-This library provides a [RAML](http://raml.org) RAML-based `MockBackend` generator for testing Angular 4 applications.
+This library provides a [RAML](http://raml.org) RAML-based [`MockBackend`](https://angular.io/api/http/testing/MockBackend) generator for testing Angular 4 applications.
 
 Simply put, you can define your REST API using RAML, and use this definition to create
 an angular Http object which speaks the same language as the API you defined.
@@ -197,7 +197,7 @@ const mockBackend = RAMLBackendConfig.initWithFile("./person-api.raml")
       .createBackend();
 ``` 
 
-#### Safety nets while mocking
+#### Safety nets while stubbing
 
 One thing that can go wrong while stubbing - or creating any kind of test double - is mimicing false behavior of the stubbed system. As a simple example, if you mistype a request path in your
 test, then you implement a service that conforms to the test, then your test will pass, but your service still won't be compatible with your backend.
