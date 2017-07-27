@@ -1,0 +1,18 @@
+#%RAML 1.0
+title: Test endpoints
+version: v0
+baseUri: http://dummy-endpoint
+mediaType: application/json
+types:
+  NamedThing: !include schemas/Thing.json
+/thing:
+  post:
+    body:
+      type: !include schemas/Thing.json
+    responses:
+      201:
+#  put:
+#    body:
+#      type: NamedThing
+#    responses:
+#      201:

@@ -9,6 +9,7 @@
   "author": "Bence Eros <ebence88@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "ajv": "^5.2.0",
     "query-string": "^4.3.4",
     "raml-1-parser": "^1.1.26",
     "url-parse": "^1.1.9"

@@ -2,6 +2,10 @@ import {MockBackend, MockConnection} from "@angular/http/testing";
 import {Method} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import {extract, parse} from "query-string";
+import Ajv = require("ajv");
+import {MalformedRequestError} from "./RAMLBackendConfig";
+
+const ajv = new Ajv();
 
 interface URIParams {
 
@@ -108,7 +112,8 @@ export class RequestPattern {
 
   constructor(
     expectedUri: string,
-    readonly expectedMethod: string
+    readonly expectedMethod: string,
+    private readonly schema
   ) {
     this.expectedUri = new URIPattern(expectedUri);
   }
@@ -119,6 +124,10 @@ export class RequestPattern {
     if (! (actualMethod.toLowerCase() === this.expectedMethod.toLowerCase()
       && uriParams !== null)) {
       return null;
+    }
+    const jsonBody = JSON.parse(request.getBody());
+    if (this.schema != null && !ajv.validate(this.schema, jsonBody)) {
+      throw new MalformedRequestError(ajv.errors);
     }
     return uriParams;
   }

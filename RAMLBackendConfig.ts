@@ -1,12 +1,20 @@
 import {Behavior, DefaultRequestValidator, NoopRequestValidator, RAMLBackend, RequestPattern} from "./RAMLBackend";
 import {loadApiSync} from "raml-1-parser/dist/raml1/artifacts/raml10parser";
-import {Api, Response as ResponseDef, TypeDeclaration} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
+import {Api, Method, Response as ResponseDef, TypeDeclaration} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
 import {parseRAMLSync} from "raml-1-parser";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import URL = require("url-parse");
 
 
 export class InvalidStubbingError extends Error {
+
+}
+
+export class MalformedRequestError extends Error {
+
+  constructor(failureReason: any[]) {
+    super(JSON.stringify(failureReason));
+  }
 
 }
 
@@ -66,6 +74,14 @@ export class RAMLBackendConfig {
 
   private pendingRequest: Request = null;
 
+  private findRequestBodySchema(method: Method): any {
+    if (method.body().length > 0 && method.body()[0].type().length > 0) {
+      return JSON.parse(method.body()[0].type()[0].toString());
+    } else{
+      return null;
+    }
+  }
+
   constructor(private api: Api) {
     const entries : Behavior[] = [];
     for (const i in this.api.allResources()) {
@@ -73,7 +89,12 @@ export class RAMLBackendConfig {
       const resourceUri = resource.absoluteUri();
       for (const j in resource.methods()) {
         const method = resource.methods()[j];
-        const pattern = new RequestPattern(resourceUri, method.method());
+        const schema = this.findRequestBodySchema(method);
+
+        // console.log("validation result", ajv.validate(JSON.parse(method.body()[0].type()[0].toString()), {prop:true}));
+        // console.log("validation errors", ajv.errors)
+
+        const pattern = new RequestPattern(resourceUri, method.method(), schema);
         const responseDefinition: ResponseDef = RAMLBackendConfig.findBestDummyResponse(method.responses());
         const response = this.buildResponseFromDefinition(responseDefinition);
         entries.push({
@@ -142,9 +163,10 @@ export class RAMLBackendConfig {
     for (const i in this.api.resources()) {
       const res = this.api.resources()[i];
       for (const j in res.methods()) {
-        const pattern = new RequestPattern(res.absoluteUri(), res.methods()[j].method());
+        const method = res.methods()[j];
+        const pattern = new RequestPattern(res.absoluteUri(), method.method(), this.findRequestBodySchema(method));
         if (pattern.matches(request)) {
-          return res.methods()[j].responses();
+          return method.responses();
         }
       }
     }
@@ -242,7 +264,7 @@ export class RAMLBackendConfig {
       const behavior = this.defined[i];
       if (behavior.requestPattern.matches(request)) {
         if ((validationError = behavior.requestValidator.matches(request)) === null) {
-          return new ResponseSetter(this, response => this.onStubResponseAvailable(new RequestPattern(path, method), response));
+          return new ResponseSetter(this, response => this.onStubResponseAvailable(new RequestPattern(path, method, null), response));
         } else {
           throw new InvalidStubbingError(validationError);
         }

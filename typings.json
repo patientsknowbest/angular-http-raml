@@ -3,6 +3,7 @@
     "jasmine": "registry:dt/jasmine#2.5.2+20170317130948"
   },
   "globalDependencies": {
+    "ajv": "registry:dt/ajv#0.0.0+20161103102204",
     "query-string": "registry:dt/query-string#4.3.0+20170315104407"
   }
 }
