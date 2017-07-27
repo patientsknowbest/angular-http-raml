@@ -76,7 +76,18 @@ export class RAMLBackendConfig {
 
   private findRequestBodySchema(method: Method): any {
     if (method.body().length > 0 && method.body()[0].type().length > 0) {
-      return JSON.parse(method.body()[0].type()[0].toString());
+      const rawSchema = method.body()[0].type()[0].toString();
+      try {
+        return JSON.parse(rawSchema);
+      } catch (e) {
+        const typeName = rawSchema.trim();
+        for (const t in this.api.types()) {
+          const typeDecl = this.api.types()[t];
+          if (typeDecl.name() === typeName) {
+            return JSON.parse(typeDecl.type()[0].toString());
+          }
+        }
+      }
     } else{
       return null;
     }

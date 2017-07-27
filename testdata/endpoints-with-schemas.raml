@@ -11,8 +11,15 @@ types:
       type: !include schemas/Thing.json
     responses:
       201:
-#  put:
-#    body:
-#      type: NamedThing
-#    responses:
-#      201:
+  put:
+    body:
+      type: NamedThing
+    responses:
+      201:
+/proptype:
+  post:
+    body:
+      type: !include schemas/Thing.json
+    responses:
+      200:
+

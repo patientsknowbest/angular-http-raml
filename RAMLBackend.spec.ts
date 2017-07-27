@@ -335,10 +335,23 @@ describe("Body validation", () => {
     const onSuccess = jasmine.createSpy("onSuccess");
 
     try {
-      http.post(absUri("/thing"), {otherprop:false}).subscribe(onSuccess);
+      http.post(absUri("/thing"), {prop:"ab"}).subscribe(onSuccess);
       fail("did not throw exception for invalid request body");
     } catch (e) {
+      console.log(e)
+      expect(onSuccess).not.toHaveBeenCalled();
+    }
+  });
 
+  it("can refer to schemas in fragment", () => {
+    const subject = createSubject("./testdata/endpoints-with-schemas.raml"), http = new Http(subject, new RequestOptions());
+    const onSuccess = jasmine.createSpy("onSuccess");
+
+    try {
+      http.post(absUri("/proptype"), {prop:"ab"}).subscribe(onSuccess);
+      fail("did not throw exception for invalid request body");
+    } catch (e) {
+      console.log(e)
       expect(onSuccess).not.toHaveBeenCalled();
     }
   });

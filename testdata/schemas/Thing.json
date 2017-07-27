@@ -1,4 +1,15 @@
 {
   "type":"object",
-  "required":["prop"]
+  "required":["prop"],
+  "properties": {
+    "prop": {
+      "$ref" : "#/definitions/PropType"
+    }
+  },
+  "definitions" : {
+    "PropType" : {
+      "type" : "string",
+      "minLength" : 3
+    }
+  }
 }
