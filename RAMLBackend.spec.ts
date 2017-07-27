@@ -338,7 +338,6 @@ describe("Body validation", () => {
       http.post(absUri("/thing"), {prop:"ab"}).subscribe(onSuccess);
       fail("did not throw exception for invalid request body");
     } catch (e) {
-      console.log(e)
       expect(onSuccess).not.toHaveBeenCalled();
     }
   });
@@ -351,7 +350,6 @@ describe("Body validation", () => {
       http.post(absUri("/proptype"), {prop:"ab"}).subscribe(onSuccess);
       fail("did not throw exception for invalid request body");
     } catch (e) {
-      console.log(e)
       expect(onSuccess).not.toHaveBeenCalled();
     }
   });
