@@ -1,6 +1,6 @@
 {
   "name": "angular-http-raml",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "testing library for creating angular 4 Http instances based on a RAML definition",
   "main": "dist/RAMLBackend.js",
   "types": "",
