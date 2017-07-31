@@ -3,6 +3,8 @@ title: Test endpoints
 version: v0
 baseUri: http://dummy-endpoint
 mediaType: application/json
+types:
+  AccessToken: !include schemas/AccessToken.json
 /endpoint:
   get:
     queryParameters:
@@ -11,6 +13,7 @@ mediaType: application/json
     responses:
       200:
         body:
+          type: AccessToken
           example:
             access_token: 123
   post:

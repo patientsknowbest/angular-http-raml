@@ -3,9 +3,16 @@ import {Method} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import {extract, parse} from "query-string";
 import Ajv = require("ajv");
-import {MalformedRequestError} from "./RAMLBackendConfig";
 
 const ajv = new Ajv();
+
+export class MalformedRequestError extends Error {
+
+  constructor(failureReason: any[]) {
+    super(JSON.stringify(failureReason));
+  }
+
+}
 
 interface URIParams {
 

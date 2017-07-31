@@ -10,14 +10,6 @@ export class InvalidStubbingError extends Error {
 
 }
 
-export class MalformedRequestError extends Error {
-
-  constructor(failureReason: any[]) {
-    super(JSON.stringify(failureReason));
-  }
-
-}
-
 export class ResponseSetter {
 
   constructor(
@@ -35,6 +27,16 @@ export class ResponseSetter {
     this.onReady(response);
     return this.owner;
   }
+
+}
+
+interface PendingBehaviorSpecification {
+
+  prematchedBehavior: Behavior;
+
+  request: Request;
+
+  // responsePatternCandidates: Method[];
 
 }
 
@@ -72,7 +74,7 @@ export class RAMLBackendConfig {
 
   private expected: Behavior[] = [];
 
-  private pendingRequest: Request = null;
+  private pendingBehaviorSpecification: PendingBehaviorSpecification = null;
 
   private findRequestBodySchema(method: Method): any {
     if (method.body().length > 0 && method.body()[0].type().length > 0) {
@@ -161,7 +163,7 @@ export class RAMLBackendConfig {
   }
 
   public lookupResponse(statusCode: number, exampleIdentifier: string): Response {
-    const possibleResponseDefs = this.lookupResponseDefsByRequest(this.pendingRequest);
+    const possibleResponseDefs = this.lookupResponseDefsByRequest(this.pendingBehaviorSpecification.request);
     for (const i in possibleResponseDefs) {
       if (Number.parseInt(possibleResponseDefs[i].code().value()) === statusCode) {
         return this.buildResponseFromDefinition(possibleResponseDefs[i], exampleIdentifier);
@@ -185,17 +187,18 @@ export class RAMLBackendConfig {
   }
 
   private onStubResponseAvailable(requestPattern: RequestPattern, response: Response) {
+    // this.pendingBehaviorSpecification.prematchedBehavior.;
     this.stubbed.unshift({
       response: response,
       requestPattern: requestPattern,
       requestValidator: new NoopRequestValidator()
     });
-    this.pendingRequest = null;
+    this.pendingBehaviorSpecification = null;
   }
 
   private onMockResponseAvailable(behavior: Behavior) {
     this.expected.push(behavior);
-    this.pendingRequest = null;
+    this.pendingBehaviorSpecification = null;
   }
 
   private absoluteUri(path: string): string {
@@ -251,14 +254,18 @@ export class RAMLBackendConfig {
     }));
   }
 
-  private markRequestAsPending(req: Request) {
-    if (this.pendingRequest !== null) {
-      const pendingReqDescr = RequestMethod[this.pendingRequest.method].toUpperCase() + " " + this.pendingRequest.url;
+  private markRequestAsPending(req: Request, behavior: Behavior) {
+    if (this.pendingBehaviorSpecification !== null) {
+      const pendingReqDescr = RequestMethod[this.pendingBehaviorSpecification.request.method].toUpperCase()
+        + " " + this.pendingBehaviorSpecification.request.url;
       const reqDescr = RequestMethod[req.method].toUpperCase() + " " + req.url;
       throw new InvalidStubbingError("unfinished behavior definition: cannot configure "
         + reqDescr + " before setting the response for " + pendingReqDescr);
     }
-    this.pendingRequest = req;
+    this.pendingBehaviorSpecification = {
+      request: req,
+      prematchedBehavior: behavior
+    };
   }
 
   private relativePath(absoluteUri: string): string {
@@ -270,10 +277,10 @@ export class RAMLBackendConfig {
     const path = this.relativePath(request.url), method =  RequestMethod[request.method];
 
     let validationError;
-    this.markRequestAsPending(request);
     for (const i in this.defined)  {
       const behavior = this.defined[i];
       if (behavior.requestPattern.matches(request)) {
+        this.markRequestAsPending(request, behavior);
         if ((validationError = behavior.requestValidator.matches(request)) === null) {
           return new ResponseSetter(this, response => this.onStubResponseAvailable(new RequestPattern(path, method, null), response));
         } else {

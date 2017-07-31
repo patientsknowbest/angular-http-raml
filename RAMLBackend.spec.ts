@@ -77,7 +77,13 @@ describe("RAMLBackend", () => {
   });
 
   xit("checks headers" , () => {
+    const subject = createSubject(), http = new Http(subject, new RequestOptions());
 
+    http.get("").subscribe(resp => {
+
+    });
+
+    subject.verifyNoPendingRequests();
   });
 
   xit("checks the type of path params", () => {
@@ -160,6 +166,19 @@ describe("explicit stubs", () => {
       expect(e).toEqual(new InvalidStubbingError("undeclared query parameter [foo] found in request"));
     }
   });
+
+  xit("refuses invalid response bodies", () => {
+    try {
+      const subject = initStubConfig().whenGET("/endpoint")
+        .thenRespond(new Response(new ResponseOptions({
+          status: 200,
+          body: JSON.stringify({invalidKey: 123})
+        })));
+      fail("did not throw exception for invalid response body");
+    } catch (e) {
+      expect(e).toEqual(new InvalidStubbingError("invalid stub response body"));
+    }
+  })
 
   it("fails if there is pending behavior (unset response)", () => {
     try {
