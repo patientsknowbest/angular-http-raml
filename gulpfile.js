@@ -23,6 +23,24 @@ gulp.task("compile", (done) => {
     .on("end", done);
 });
 
+gulp.task("bundle", ["compile"], (done) => {
+  const tsconfig = require("./tsconfig.json");
+  const tsPath = tsconfig.include;
+  const compilerOptions = tsconfig.compilerOptions;
+  compilerOptions.declaration = true;
+
+  const tsProject = tsc.createProject(compilerOptions);
+
+  const tsResult = gulp.src(tsPath)
+    .pipe(sourcemaps.init())
+    .pipe(tsProject());
+
+  tsResult.dts
+    .pipe(sourcemaps.write())
+    .pipe(gulp.dest("dist"))
+    .on("end", done);
+});
+
 gulp.task("test-compile", (done) => {
   const tsconfig = require("./tsconfig.json");
   const tsPath = tsconfig.include;

@@ -14,7 +14,7 @@ export class MalformedRequestError extends Error {
 
 }
 
-interface URIParams {
+export interface URIParams {
 
   [paramName: string]: any
 

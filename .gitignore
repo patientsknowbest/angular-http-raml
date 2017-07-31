@@ -3,4 +3,3 @@ package-lock.json
 .idea
 typings
 angular-http-raml.iml
-dist
