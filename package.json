@@ -12,7 +12,7 @@
   "dependencies": {
     "ajv": "^5.2.0",
     "query-string": "^4.3.4",
-    "raml-1-parser": "^1.1.26",
+    "raml-1-parser": "1.1.26",
     "url-parse": "^1.1.9"
   },
   "devDependencies": {
@@ -32,6 +32,10 @@
     "is-valid-glob": "^1.0.0",
     "jasmine": "^2.6.0",
     "karma": "^1.7.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-commonjs": "^1.0.0",
+    "karma-coverage": "^1.1.1",
+    "karma-jasmine": "^1.1.0",
     "lazystream": "^1.0.0",
     "lru-cache": "^4.1.1",
     "merge-stream": "^1.0.1",

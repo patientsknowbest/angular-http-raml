@@ -43,12 +43,11 @@ gulp.task("bundle", ["compile"], (done) => {
 
 gulp.task("test-compile", (done) => {
   const tsconfig = require("./tsconfig.json");
-  const tsPath = tsconfig.include;
   const compilerOptions = tsconfig.compilerOptions;
   compilerOptions.isolatedModules = false;
   const tsProject = tsc.createProject(compilerOptions);
 
-  const tsResult = gulp.src(tsPath)
+  const tsResult = gulp.src(tsconfig.include)
   // .pipe(noop()).on("end", done);
     .pipe(sourcemaps.init())
     .pipe(tsProject());
