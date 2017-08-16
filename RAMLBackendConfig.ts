@@ -1,10 +1,10 @@
 import {Behavior, DefaultRequestValidator, NoopRequestValidator, RAMLBackend, RequestPattern} from "./RAMLBackend";
-import {loadApiSync} from "raml-1-parser/dist/raml1/artifacts/raml10parser";
+// import {loadApiSync} from "raml-1-parser/dist/raml1/artifacts/raml10parser";
 import {Api, Method, Response as ResponseDef, TypeDeclaration} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
-import {parseRAMLSync} from "raml-1-parser";
+import {parseRAMLSync, loadApiSync} from "raml-1-parser";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import URL = require("url-parse");
-
+// import * as RAML from "./raml-1-parser";
 
 export class InvalidStubbingError extends Error {
 
@@ -43,12 +43,19 @@ interface PendingBehaviorSpecification {
 export class RAMLBackendConfig {
 
   static initWithFile(pathToRAMLFile: string): RAMLBackendConfig {
-    const api = loadApiSync(pathToRAMLFile);
-    return new RAMLBackendConfig(api);
-  }
-
-  static initWithDefinition(definition: string): RAMLBackendConfig {
-    const api = parseRAMLSync(definition) as Api;
+    const api = loadApiSync(pathToRAMLFile, {
+    fsResolver: {
+    	content: function(path){ 
+            var xhttp = new XMLHttpRequest(), request = xhttp;
+            xhttp.open("GET", path, false);
+            xhttp.send();
+            if (request.status === 200) {
+                return request.responseText;
+            }
+        },
+    	list: function(path){ throw "list dir: " + path; }
+    }
+});
     return new RAMLBackendConfig(api);
   }
 
