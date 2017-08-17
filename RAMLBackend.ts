@@ -1,5 +1,4 @@
 import {MockBackend, MockConnection} from "@angular/http/testing";
-import {Method} from "raml-1-parser/dist/raml1/artifacts/raml10parserapi";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import {extract, parse} from "query-string";
 import Ajv = require("ajv");
