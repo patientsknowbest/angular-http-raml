@@ -13,7 +13,7 @@ function ok() {
   }));
 }
 
-function createSubject(path: string = "./testdata/test-endpoints.raml"): RAMLBackend {
+function createSubject(path: string = "./base/testdata/test-endpoints.raml"): RAMLBackend {
   return RAMLBackendConfig.initWithFile(path)
     .stubAll()
     .createBackend();
@@ -117,7 +117,7 @@ describe("URIPattern", () => {
 describe("explicit stubs", () => {
 
   function initStubConfig() {
-    return RAMLBackendConfig.initWithFile("./testdata/stub-base.raml").stubAll();
+    return RAMLBackendConfig.initWithFile("./base/testdata/stub-base.raml").stubAll();
   }
 
   it("overrides 'example' responses", ()  => {
@@ -279,7 +279,7 @@ describe("explicit stubs", () => {
 describe("response selection", () => {
 
   it("returns the lowest 2xx response by default", () => {
-    const subject = RAMLBackendConfig.initWithFile("./testdata/status-codes.raml")
+    const subject = RAMLBackendConfig.initWithFile("./base/testdata/status-codes.raml")
       .stubAll()
       .createBackend();
     const http = new Http(subject, new RequestOptions());
@@ -290,7 +290,7 @@ describe("response selection", () => {
   });
 
   it("can stub response by only status code", () => {
-    const subject = RAMLBackendConfig.initWithFile("./testdata/status-codes.raml")
+    const subject = RAMLBackendConfig.initWithFile("./base/testdata/status-codes.raml")
       .whenGET("/endpoint").thenRespondWith(500)
       .createBackend();
     const http = new Http(subject, new RequestOptions());
@@ -304,7 +304,7 @@ describe("response selection", () => {
   });
 
   it("can stub by only status code and example id", () => {
-    const subject = RAMLBackendConfig.initWithFile("./testdata/status-codes.raml")
+    const subject = RAMLBackendConfig.initWithFile("./base/testdata/status-codes.raml")
       .whenGET("/endpoint").thenRespondWith(201, "withEntityId")
       .createBackend();
     const http = new Http(subject, new RequestOptions());
@@ -318,7 +318,7 @@ describe("response selection", () => {
 
   it("throws exception if no examples are defined", () => {
     try {
-      const subject = RAMLBackendConfig.initWithFile("./testdata/status-codes.raml")
+      const subject = RAMLBackendConfig.initWithFile("./base/testdata/status-codes.raml")
         .whenGET("/endpoint").thenRespondWith(200, "notFound")
       fail("did not throw exception");
     } catch (e) {
@@ -328,7 +328,7 @@ describe("response selection", () => {
 
   it("throws exception if no examples are defined", () => {
     try {
-      const subject = RAMLBackendConfig.initWithFile("./testdata/status-codes.raml")
+      const subject = RAMLBackendConfig.initWithFile("./base/testdata/status-codes.raml")
         .whenGET("/endpoint").thenRespondWith(201, "notFound")
       fail();
     } catch (e) {
@@ -338,7 +338,7 @@ describe("response selection", () => {
 
   it("throws exception if no resp found with status code", () => {
     try {
-      RAMLBackendConfig.initWithFile("./testdata/status-codes.raml").whenGET("/endpoint").thenRespondWith(555);
+      RAMLBackendConfig.initWithFile("./base/testdata/status-codes.raml").whenGET("/endpoint").thenRespondWith(555);
       fail("did not throw exception for undefined response")
     } catch (e) {
       expect(e).toEqual(new InvalidStubbingError("there is no response defined with status code 555 in the RAML file"));
@@ -350,7 +350,7 @@ describe("response selection", () => {
 describe("Body validation", () => {
 
   it("validates request bodies as per json schema", () => {
-    const subject = createSubject("./testdata/endpoints-with-schemas.raml"), http = new Http(subject, new RequestOptions());
+    const subject = createSubject("./base/testdata/endpoints-with-schemas.raml"), http = new Http(subject, new RequestOptions());
     const onSuccess = jasmine.createSpy("onSuccess");
 
     try {
@@ -362,7 +362,7 @@ describe("Body validation", () => {
   });
 
   it("can refer to schemas in fragment", () => {
-    const subject = createSubject("./testdata/endpoints-with-schemas.raml"), http = new Http(subject, new RequestOptions());
+    const subject = createSubject("./base/testdata/endpoints-with-schemas.raml"), http = new Http(subject, new RequestOptions());
     const onSuccess = jasmine.createSpy("onSuccess");
 
     try {

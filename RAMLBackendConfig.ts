@@ -44,9 +44,7 @@ export class RAMLBackendConfig {
   static initWithFile(pathToRAMLFile: string): RAMLBackendConfig {
     const api = loadApiSync(pathToRAMLFile, {
     fsResolver: {
-    	content: function(path){ 
-            path = "./base" + path;
-            console.log("GET", path)
+    	content: function(path){
             var xhttp = new XMLHttpRequest(), request = xhttp;
             xhttp.open("GET", path, false);
             xhttp.send();
