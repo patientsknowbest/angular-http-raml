@@ -1,8 +1,8 @@
 module.exports = {
-    entry: "./dist/RAMLBackend.js",
+    entry: "./dist/RAMLBackendConfig.js",
     output: {
         filename:"./dist/index.js",
-        library: "my-lib",
+        //library: "my-lib",
         libraryTarget: "commonjs"
     }
 }
