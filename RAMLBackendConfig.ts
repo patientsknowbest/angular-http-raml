@@ -1,6 +1,6 @@
 import {Behavior, DefaultRequestValidator, NoopRequestValidator, RAMLBackend, RequestPattern} from "./RAMLBackend";
 
-import {Api, Method, Response as ResponseDef, TypeDeclaration} from "./raml-1-parser";
+import {Api, Method, Response as ResponseDef, TypeDeclaration} from "raml-10-parser-api";
 import {parseRAMLSync, loadApiSync} from "./raml-1-parser";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import URL = require("url-parse");

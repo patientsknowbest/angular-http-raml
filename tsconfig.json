@@ -5,6 +5,7 @@
     "declaration": false,
     "noImplicitAny": false,
     "removeComments": false,
+    "allowJs": true,
     "noLib": false,
     "sourceMap": true,
     "outDir": "dist",
@@ -12,7 +13,7 @@
     "lib": [
       "es2016",
       "dom"],
-    "typeRoots": ["./typings/globals", "node_modules/@types"]
+    "typeRoots": ["./typings/globals", "node_modules/@types", "./custom_typings"]
   },
   "include" : ["*.ts"]
 }
