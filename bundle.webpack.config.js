@@ -4,5 +4,13 @@ module.exports = {
         filename:"./dist/index.js",
         //library: "my-lib",
         libraryTarget: "commonjs"
-    }
+    },
+  module: {
+    loaders: [
+      {
+        test: /\.json$/,
+        loader: 'json-loader'
+      }
+    ]
+  }
 }

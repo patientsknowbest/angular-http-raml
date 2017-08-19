@@ -32,6 +32,7 @@
     "is-valid-glob": "^1.0.0",
     "jasmine": "^2.6.0",
     "jasmine-core": "^2.7.0",
+    "json-loader": "^0.5.7",
     "karma": "^1.7.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-commonjs": "^1.0.0",
