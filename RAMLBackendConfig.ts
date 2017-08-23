@@ -1,5 +1,5 @@
 import {Behavior, DefaultRequestValidator, NoopRequestValidator, RAMLBackend, RequestPattern} from "./RAMLBackend";
-import { load } from "js-yaml";
+import {safeLoad} from "js-yaml";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import URL = require("url-parse");
 
@@ -9,10 +9,9 @@ export class InvalidStubbingError extends Error {
 
 export class ResponseSetter {
 
-  constructor(
-    private owner: RAMLBackendConfig,
-    private onReady: (response: Response) => void
-  ) {}
+  constructor(private owner: RAMLBackendConfig,
+              private onReady: (response: Response) => void) {
+  }
 
   public thenRespond(response: Response): RAMLBackendConfig {
     this.onReady(response);
@@ -39,13 +38,26 @@ interface PendingBehaviorSpecification {
 
 export class RAMLBackendConfig {
 
+  static topLevelKeywords: string[] = ["title", "version", "baseUri",
+  "mediaType", "types", "securedBy"];
+
+
   static initWithFile(pathToRAMLFile: string): RAMLBackendConfig {
-    const api = load(pathToRAMLFile);
-    return new RAMLBackendConfig(api);
+    var request = new XMLHttpRequest();
+    request.open('GET', pathToRAMLFile, false);  // `false` makes the request synchronous
+    request.send(null);
+
+    if (request.status === 200) {
+      const api = safeLoad(requewst.responseText);
+      console.log(pathToRAMLFile, api)
+      return new RAMLBackendConfig(api);
+    }
+    throw new Error("failed to GET " + pathToRAMLFile + ": " + request.status);
   }
 
-  private static findBestDummyResponse(responses: ResponseDef[]): ResponseDef {
-    let bestFittingResp: ResponseDef = null;
+  private static findBestDummyResponse(responses) {
+    let bestFittingResp = null;
+    console.log("looking for responses: ", Object.keys(responses))
     for (const i in responses) {
       const candidate = responses[i];
       const statusCode = Number.parseInt(candidate.code().value());
@@ -68,39 +80,63 @@ export class RAMLBackendConfig {
 
   private pendingBehaviorSpecification: PendingBehaviorSpecification = null;
 
-  private findRequestBodySchema(method: Method): any {
-    if (method.body().length > 0 && method.body()[0].type().length > 0) {
-      const rawSchema = method.body()[0].type()[0].toString();
+  private findRequestBodySchema(method): any {
+    if (method["body"] && method["body"]["type"]) {
+      const rawSchema = method["body"]["type"];
       try {
         return JSON.parse(rawSchema);
       } catch (e) {
         const typeName = rawSchema.trim();
-        for (const t in this.api.types()) {
-          const typeDecl = this.api.types()[t];
-          if (typeDecl.name() === typeName) {
-            return JSON.parse(typeDecl.type()[0].toString());
+        for (const t in this.api["types"]) {
+          if (t === typeName) {
+            return JSON.parse(this.api["types"][t].toString());
           }
         }
       }
-    } else{
+    } else {
       return null;
     }
   }
 
+  private absoluteUri(relativeUri: string): string {
+    return this.api["baseUri"] + relativeUri;
+  }
+
+  private isKeyword(candidate: string): boolean {
+    for (let i in RAMLBackendConfig.topLevelKeywords) {
+      if (RAMLBackendConfig.topLevelKeywords[i] === candidate) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private allResources(api: any): any {
+    const rval = {};
+    for (var i in api) {
+      if (!this.isKeyword(i)) {
+        rval[i] = api[i];
+      }
+    }
+    return rval;
+  }
+
   constructor(private api) {
-    const entries : Behavior[] = [];
-    for (const i in this.api.allResources()) {
-      const resource =  this.api.allResources()[i];
-      const resourceUri = resource.absoluteUri();
-      for (const j in resource.methods()) {
-        const method = resource.methods()[j];
+    console.log(typeof api, api)
+    const entries: Behavior[] = [];
+    const allResources = this.allResources(this.api);
+    for (const i in allResources) {
+      const resource = allResources[i];
+      const resourceUri = this.absoluteUri(i);
+      console.log("resource:", resource, i, allResources)
+      for (const methodName in resource) {
+        const method = resource[methodName];
         const schema = this.findRequestBodySchema(method);
 
-        // console.log("validation result", ajv.validate(JSON.parse(method.body()[0].type()[0].toString()), {prop:true}));
-        // console.log("validation errors", ajv.errors)
+        console.log("method: ", method)
 
-        const pattern = new RequestPattern(resourceUri, method.method(), schema);
-        const responseDefinition: ResponseDef = RAMLBackendConfig.findBestDummyResponse(method.responses());
+        const pattern = new RequestPattern(resourceUri, methodName, schema);
+        const responseDefinition = RAMLBackendConfig.findBestDummyResponse(method["responses"]);
         const response = this.buildResponseFromDefinition(responseDefinition);
         entries.push({
           requestPattern: pattern,
@@ -112,9 +148,9 @@ export class RAMLBackendConfig {
     this.defined = entries;
   }
 
-  private buildResponseFromDefinition(responseDefinition: ResponseDef, exampleIdentifier?: string) {
+  private buildResponseFromDefinition(responseDefinition, exampleIdentifier?: string) {
     return new Response(new ResponseOptions({
-      status: new Number(responseDefinition.code().value()).valueOf(),
+      status: 200, // TODO
       body: this.lookupExampleResponseBody(responseDefinition.body()[0], exampleIdentifier)
     }));
   }
@@ -128,6 +164,7 @@ export class RAMLBackendConfig {
     function throwError() {
       throw new InvalidStubbingError("could not find example [" + exampleIdentifier + "]");
     }
+
     if (respBodyDef === undefined) {
       if (exampleIdentifier != null) {
         throwError();
@@ -191,10 +228,6 @@ export class RAMLBackendConfig {
   private onMockResponseAvailable(behavior: Behavior) {
     this.expected.push(behavior);
     this.pendingBehaviorSpecification = null;
-  }
-
-  private absoluteUri(path: string): string {
-    return this.api.baseUri().value() + path;
   }
 
   public whenGET(uri: string): ResponseSetter {
@@ -266,10 +299,10 @@ export class RAMLBackendConfig {
   }
 
   public whenRequestIs(request: Request): ResponseSetter {
-    const path = this.relativePath(request.url), method =  RequestMethod[request.method];
+    const path = this.relativePath(request.url), method = RequestMethod[request.method];
 
     let validationError;
-    for (const i in this.defined)  {
+    for (const i in this.defined) {
       const behavior = this.defined[i];
       if (behavior.requestPattern.matches(request)) {
         this.markRequestAsPending(request, behavior);
@@ -280,7 +313,7 @@ export class RAMLBackendConfig {
         }
       }
     }
-    throw new InvalidStubbingError("found no declaration of request ["+ method.toUpperCase()
+    throw new InvalidStubbingError("found no declaration of request [" + method.toUpperCase()
       + " " + path + "] in RAML - refusing to stub");
   }
 

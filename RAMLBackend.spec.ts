@@ -23,7 +23,7 @@ function createSubject(path: string = "./base/testdata/test-endpoints.raml"): RA
 
 describe("RAMLBackend", () => {
 
-  it("returns 200 with example for found endpoints", () => {
+  fit("returns 200 with example for found endpoints", () => {
     const subject = createSubject(), http = new Http(subject, new RequestOptions());
 
     http.get(absUri("/auth/token"))

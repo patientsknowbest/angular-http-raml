@@ -10,29 +10,28 @@ types:
       name:
         required: true
         type: string
-/auth:
-  /token:
-    get:
-      queryParameters:
-        page:
-          type: number
-        per_page:
-          type: number
-        category:
-          type: string
-      responses:
-        200:
-          body:
-            type: Person
-            example:
-              name: "John Snow"
+/auth/token:
+  get:
+    queryParameters:
+      page:
+        type: number
+      per_page:
+        type: number
+      category:
+        type: string
+    responses:
+      200:
+        body:
+          type: Person
+          example:
+            name: "John Snow"
 #        type: !include access-token.json
-    post:
-      responses:
-        201:
-          body:
-            example:
-              message: "created"
+  post:
+    responses:
+      201:
+        body:
+          example:
+            message: "created"
 /create/whatever:
   get:
     responses:
