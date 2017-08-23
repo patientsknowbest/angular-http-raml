@@ -48,7 +48,7 @@ export class RAMLBackendConfig {
     request.send(null);
 
     if (request.status === 200) {
-      const api = safeLoad(requewst.responseText);
+      const api = safeLoad(request.responseText);
       console.log(pathToRAMLFile, api)
       return new RAMLBackendConfig(api);
     }
@@ -56,20 +56,23 @@ export class RAMLBackendConfig {
   }
 
   private static findBestDummyResponse(responses) {
-    let bestFittingResp = null;
+    let bestFittingResp = null, bestFittingRespCode = null;
+    console.log(responses)
     console.log("looking for responses: ", Object.keys(responses))
-    for (const i in responses) {
-      const candidate = responses[i];
-      const statusCode = Number.parseInt(candidate.code().value());
+    for (const code in responses) {
+      const candidate = responses[code];
+      const statusCode = Number.parseInt(code);
       if (200 <= statusCode && statusCode < 300) {
         if (bestFittingResp === null) {
           bestFittingResp = candidate;
-        } else if (Number.parseInt(bestFittingResp.code().value()) > statusCode) {
+          bestFittingRespCode = statusCode;
+        } else if (bestFittingRespCode > statusCode) {
           bestFittingResp = candidate;
+          bestFittingRespCode = statusCode;
         }
       }
     }
-    return bestFittingResp;
+    return bestFittingResp || {};
   }
 
   private defined: Behavior[] = [];
@@ -151,7 +154,7 @@ export class RAMLBackendConfig {
   private buildResponseFromDefinition(responseDefinition, exampleIdentifier?: string) {
     return new Response(new ResponseOptions({
       status: 200, // TODO
-      body: this.lookupExampleResponseBody(responseDefinition.body()[0], exampleIdentifier)
+      body: this.lookupExampleResponseBody(responseDefinition["body"], exampleIdentifier)
     }));
   }
 
@@ -165,13 +168,13 @@ export class RAMLBackendConfig {
       throw new InvalidStubbingError("could not find example [" + exampleIdentifier + "]");
     }
 
-    if (respBodyDef === undefined) {
+    if (respBodyDef == undefined) {
       if (exampleIdentifier != null) {
         throwError();
       }
       return null;
     }
-    const exampleDefs = respBodyDef.examples();
+    const exampleDefs = respBodyDef["examples"];
     if (exampleIdentifier != null) {
       if (exampleDefs == null || exampleDefs.length === 0) {
         throwError();
@@ -184,18 +187,18 @@ export class RAMLBackendConfig {
       }
       throwError();
     }
-    if (respBodyDef.example() === null) {
+    if (respBodyDef["example"] === null) {
       return exampleDefs[0].value();
     } else {
-      return respBodyDef.example().value();
+      return respBodyDef["example"];
     }
   }
 
   public lookupResponse(statusCode: number, exampleIdentifier: string): Response {
     const possibleResponseDefs = this.lookupResponseDefsByRequest(this.pendingBehaviorSpecification.request);
-    for (const i in possibleResponseDefs) {
-      if (Number.parseInt(possibleResponseDefs[i].code().value()) === statusCode) {
-        return this.buildResponseFromDefinition(possibleResponseDefs[i], exampleIdentifier);
+    for (const code in possibleResponseDefs) {
+      if (Number.parseInt(code) === statusCode) {
+        return this.buildResponseFromDefinition(possibleResponseDefs[code], exampleIdentifier);
       }
     }
     throw new InvalidStubbingError("there is no response defined with status code " + statusCode + " in the RAML file");

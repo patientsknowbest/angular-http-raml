@@ -30,7 +30,9 @@ export class DefaultRequestValidator implements RequestValidator {
   private expectedQueryParams: string[] = [];
 
   constructor(method) {
-    method.queryParameters().forEach(param => this.expectedQueryParams.push(param.name()));
+    for (var paramName in (method["queryParameters"] || {})) {
+      this.expectedQueryParams.push(paramName);
+    }
   }
 
   private parseQueryString(url: string): object {
