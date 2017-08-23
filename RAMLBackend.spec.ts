@@ -2,6 +2,8 @@ import {RAMLBackend, URIPattern} from "./RAMLBackend";
 import {Http, Request, RequestOptions, Response, ResponseOptions} from "@angular/http";
 import {InvalidStubbingError, RAMLBackendConfig} from "./RAMLBackendConfig";
 
+
+
 function absUri(path: string): string {
   return "http://dummy-endpoint" + path;
 }

@@ -1,7 +1,5 @@
 import {Behavior, DefaultRequestValidator, NoopRequestValidator, RAMLBackend, RequestPattern} from "./RAMLBackend";
-
-import {Api, Method, Response as ResponseDef, TypeDeclaration} from "raml-10-parser-api";
-import {parseRAMLSync, loadApiSync} from "./raml-1-parser";
+import { load } from "js-yaml";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import URL = require("url-parse");
 
@@ -42,19 +40,7 @@ interface PendingBehaviorSpecification {
 export class RAMLBackendConfig {
 
   static initWithFile(pathToRAMLFile: string): RAMLBackendConfig {
-    const api = loadApiSync(pathToRAMLFile, {
-    fsResolver: {
-    	content: function(path){
-            var xhttp = new XMLHttpRequest(), request = xhttp;
-            xhttp.open("GET", path, false);
-            xhttp.send();
-            if (request.status === 200) {
-                return request.responseText;
-            }
-        },
-    	list: function(path){ throw "list dir: " + path; }
-    }
-});
+    const api = load(pathToRAMLFile);
     return new RAMLBackendConfig(api);
   }
 
@@ -101,7 +87,7 @@ export class RAMLBackendConfig {
     }
   }
 
-  constructor(private api: Api) {
+  constructor(private api) {
     const entries : Behavior[] = [];
     for (const i in this.api.allResources()) {
       const resource =  this.api.allResources()[i];

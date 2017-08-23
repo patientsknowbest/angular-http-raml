@@ -1,6 +1,5 @@
 import {MockBackend, MockConnection} from "@angular/http/testing";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
-import {Method} from "raml-10-parser-api";
 import {extract, parse} from "query-string";
 import Ajv = require("ajv");
 
@@ -30,7 +29,7 @@ export class DefaultRequestValidator implements RequestValidator {
 
   private expectedQueryParams: string[] = [];
 
-  constructor(method: Method) {
+  constructor(method) {
     method.queryParameters().forEach(param => this.expectedQueryParams.push(param.name()));
   }
 
