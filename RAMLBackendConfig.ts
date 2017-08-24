@@ -1,7 +1,19 @@
 import {Behavior, DefaultRequestValidator, NoopRequestValidator, RAMLBackend, RequestPattern} from "./RAMLBackend";
-import {safeLoad} from "js-yaml";
+import {safeLoad, Type, Schema} from "js-yaml";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import URL = require("url-parse");
+
+// export class IncludeType extends Type {
+//
+//   constructor() {
+//     super("!include", {
+//       resolve: function() {
+//         console.log("resolve called with ", arguments)
+//       }
+//     });
+//   }
+//
+// }
 
 export class InvalidStubbingError extends Error {
 
@@ -36,6 +48,17 @@ interface PendingBehaviorSpecification {
 
 }
 
+export const IncludeType = new Type("!include", {
+  kind: "scalar",
+  construct: function(data) {
+    console.log("construct called with ", arguments)
+  },
+  resolve: function() {
+    console.log("resolve called with ", arguments)
+  }
+});
+
+
 export class RAMLBackendConfig {
 
   static topLevelKeywords: string[] = ["title", "version", "baseUri",
@@ -48,7 +71,9 @@ export class RAMLBackendConfig {
     request.send(null);
 
     if (request.status === 200) {
-      const api = safeLoad(request.responseText);
+      const api = safeLoad(request.responseText, {
+        schema: Schema.create([IncludeType])
+      });
       console.log(pathToRAMLFile, api)
       return new RAMLBackendConfig(api);
     }

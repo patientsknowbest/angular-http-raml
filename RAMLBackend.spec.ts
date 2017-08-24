@@ -23,7 +23,7 @@ function createSubject(path: string = "./base/testdata/test-endpoints.raml"): RA
 
 describe("RAMLBackend", () => {
 
-  fit("returns 200 with example for found endpoints", () => {
+  it("returns 200 with example for found endpoints", () => {
     const subject = createSubject(), http = new Http(subject, new RequestOptions());
 
     http.get(absUri("/auth/token"))
@@ -363,7 +363,7 @@ describe("Body validation", () => {
     }
   });
 
-  it("can refer to schemas in fragment", () => {
+  fit("can refer to schemas in fragment", () => {
     const subject = createSubject("./base/testdata/endpoints-with-schemas.raml"), http = new Http(subject, new RequestOptions());
     const onSuccess = jasmine.createSpy("onSuccess");
 
