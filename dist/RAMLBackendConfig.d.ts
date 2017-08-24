@@ -1,4 +1,6 @@
+/// <reference types="js-yaml" />
 import { RAMLBackend } from "./RAMLBackend";
+import { Type } from "js-yaml";
 import { Request, Response } from "@angular/http";
 export declare class InvalidStubbingError extends Error {
 }
@@ -9,8 +11,10 @@ export declare class ResponseSetter {
     thenRespond(response: Response): RAMLBackendConfig;
     thenRespondWith(statusCode: number, exampleIdentifier?: string): RAMLBackendConfig;
 }
+export declare const IncludeType: Type;
 export declare class RAMLBackendConfig {
     private api;
+    static topLevelKeywords: string[];
     static initWithFile(pathToRAMLFile: string): RAMLBackendConfig;
     private static findBestDummyResponse(responses);
     private defined;
@@ -18,6 +22,9 @@ export declare class RAMLBackendConfig {
     private expected;
     private pendingBehaviorSpecification;
     private findRequestBodySchema(method);
+    private absoluteUri(relativeUri);
+    private isKeyword(candidate);
+    private allResources(api);
     constructor(api: any);
     private buildResponseFromDefinition(responseDefinition, exampleIdentifier?);
     stubAll(): RAMLBackendConfig;
@@ -26,7 +33,6 @@ export declare class RAMLBackendConfig {
     private lookupResponseDefsByRequest(request);
     private onStubResponseAvailable(requestPattern, response);
     private onMockResponseAvailable(behavior);
-    private absoluteUri(path);
     whenGET(uri: string): ResponseSetter;
     whenHEAD(uri: string): ResponseSetter;
     whenPOST(uri: string): ResponseSetter;

@@ -20,7 +20,7 @@ module.exports = function (config) {
     },
     files: [
       "test-bundle.js",
-      { pattern: "testdata/*", included: false}
+      { pattern: "testdata/**/*", included: false}
     ],
     preprocessors: {
 //      './src/test.ts': ['@angular/cli']

@@ -48,16 +48,38 @@ interface PendingBehaviorSpecification {
 
 }
 
+function relPathToAbs (sRelPath, currentPath = location.pathname) {
+  var nUpLn, sDir = "", sPath = currentPath.replace(/[^\/]*$/, sRelPath.replace(/(\/|^)(?:\.?\/+)+/g, "$1"));
+  for (var nEnd, nStart = 0; nEnd = sPath.indexOf("/../", nStart), nEnd > -1; nStart = nEnd + nUpLn) {
+    nUpLn = /^\/(?:\.\.\/)*/.exec(sPath.slice(nEnd))[0].length;
+    sDir = (sDir + sPath.substring(nStart, nEnd)).replace(new RegExp("(?:\\\/+[^\\\/]*){0," + ((nUpLn - 1) / 3) + "}$"), "/");
+  }
+  return sDir + sPath.substr(nStart);
+}
+
+let rootFilePath;
+
 export const IncludeType = new Type("!include", {
   kind: "scalar",
-  construct: function(data) {
-    console.log("construct called with ", arguments)
+  construct: function(pathToRAMLFile) {
+    pathToRAMLFile = relPathToAbs(pathToRAMLFile, rootFilePath);
+    var request = new XMLHttpRequest();
+    request.open('GET', pathToRAMLFile, false);
+    request.send(null);
+    if (request.status === 200) {
+      const api = safeLoad(request.responseText, {
+        schema: Schema.create([IncludeType])
+      });
+      console.log(pathToRAMLFile, api)
+      return api;
+    } else {
+      throw Error(request.status + ": GET " + pathToRAMLFile);
+    }
   },
-  resolve: function() {
-    console.log("resolve called with ", arguments)
+  resolve: function(path: string) {
+    return true;
   }
 });
-
 
 export class RAMLBackendConfig {
 
@@ -66,6 +88,7 @@ export class RAMLBackendConfig {
 
 
   static initWithFile(pathToRAMLFile: string): RAMLBackendConfig {
+    rootFilePath = pathToRAMLFile;
     var request = new XMLHttpRequest();
     request.open('GET', pathToRAMLFile, false);  // `false` makes the request synchronous
     request.send(null);
@@ -112,7 +135,7 @@ export class RAMLBackendConfig {
     if (method["body"] && method["body"]["type"]) {
       const rawSchema = method["body"]["type"];
       try {
-        return JSON.parse(rawSchema);
+        return rawSchema;
       } catch (e) {
         const typeName = rawSchema.trim();
         for (const t in this.api["types"]) {
@@ -188,7 +211,7 @@ export class RAMLBackendConfig {
     return this;
   }
 
-  private lookupExampleResponseBody(respBodyDef: TypeDeclaration, exampleIdentifier?: string): string {
+  private lookupExampleResponseBody(respBodyDef, exampleIdentifier?: string): string {
     function throwError() {
       throw new InvalidStubbingError("could not find example [" + exampleIdentifier + "]");
     }
@@ -229,7 +252,7 @@ export class RAMLBackendConfig {
     throw new InvalidStubbingError("there is no response defined with status code " + statusCode + " in the RAML file");
   }
 
-  private lookupResponseDefsByRequest(request: Request): ResponseDef[] {
+  private lookupResponseDefsByRequest(request: Request): any[] {
     for (const i in this.api.resources()) {
       const res = this.api.resources()[i];
       for (const j in res.methods()) {
