@@ -101,23 +101,20 @@ export class RAMLBackendConfig {
     throw new Error("failed to GET " + pathToRAMLFile + ": " + request.status);
   }
 
-  private static findBestDummyResponse(responses) {
+  private static findBestDummyResponse(responses) : {statusCode: number, responseDefinition: any} {
     let bestFittingResp = null, bestFittingRespCode = null;
     console.log("looking for responses: ", Object.keys(responses))
     for (const code in responses) {
       const candidate = responses[code];
       const statusCode = Number.parseInt(code);
       if (200 <= statusCode && statusCode < 300) {
-        if (bestFittingResp === null) {
-          bestFittingResp = candidate;
-          bestFittingRespCode = statusCode;
-        } else if (bestFittingRespCode > statusCode) {
+        if (bestFittingRespCode === null || bestFittingRespCode > statusCode) {
           bestFittingResp = candidate;
           bestFittingRespCode = statusCode;
         }
       }
     }
-    return bestFittingResp || {};
+    return {statusCode: bestFittingRespCode, responseDefinition: bestFittingResp || {}};
   }
 
   private defined: Behavior[] = [];
@@ -180,8 +177,8 @@ export class RAMLBackendConfig {
         const schema = this.findRequestBodySchema(method);
 
         const pattern = new RequestPattern(resourceUri, methodName, schema);
-        const responseDefinition = RAMLBackendConfig.findBestDummyResponse(method["responses"]);
-        const response = this.buildResponseFromDefinition(200, responseDefinition);
+        const {statusCode, responseDefinition} = RAMLBackendConfig.findBestDummyResponse(method["responses"]);
+        const response = this.buildResponseFromDefinition(statusCode, responseDefinition);
         entries.push({
           requestPattern: pattern,
           response: response,
