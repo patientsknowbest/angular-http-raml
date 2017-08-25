@@ -11,7 +11,9 @@ export declare class ResponseSetter {
     thenRespond(response: Response): RAMLBackendConfig;
     thenRespondWith(statusCode: number, exampleIdentifier?: string): RAMLBackendConfig;
 }
-export declare const IncludeType: Type;
+export declare class IncludeType extends Type {
+    constructor();
+}
 export declare class RAMLBackendConfig {
     private api;
     static topLevelKeywords: string[];

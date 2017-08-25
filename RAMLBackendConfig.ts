@@ -1,19 +1,7 @@
 import {Behavior, DefaultRequestValidator, NoopRequestValidator, RAMLBackend, RequestPattern} from "./RAMLBackend";
-import {safeLoad, Type, Schema} from "js-yaml";
+import {safeLoad, Schema, Type} from "js-yaml";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
 import URL = require("url-parse");
-
-// export class IncludeType extends Type {
-//
-//   constructor() {
-//     super("!include", {
-//       resolve: function() {
-//         console.log("resolve called with ", arguments)
-//       }
-//     });
-//   }
-//
-// }
 
 export class InvalidStubbingError extends Error {
 
@@ -48,7 +36,7 @@ interface PendingBehaviorSpecification {
 
 }
 
-function relPathToAbs (sRelPath, currentPath = location.pathname) {
+function relPathToAbs(sRelPath, currentPath = location.pathname) {
   var nUpLn, sDir = "", sPath = currentPath.replace(/[^\/]*$/, sRelPath.replace(/(\/|^)(?:\.?\/+)+/g, "$1"));
   for (var nEnd, nStart = 0; nEnd = sPath.indexOf("/../", nStart), nEnd > -1; nStart = nEnd + nUpLn) {
     nUpLn = /^\/(?:\.\.\/)*/.exec(sPath.slice(nEnd))[0].length;
@@ -57,33 +45,63 @@ function relPathToAbs (sRelPath, currentPath = location.pathname) {
   return sDir + sPath.substr(nStart);
 }
 
-let rootFilePath;
+class YAMLFileLoader {
 
-export const IncludeType = new Type("!include", {
-  kind: "scalar",
-  construct: function(pathToRAMLFile) {
-    pathToRAMLFile = relPathToAbs(pathToRAMLFile, rootFilePath);
+  private currentDocumentPath;
+
+  constructor(pathToYAMLFile: string) {
+    this.currentDocumentPath = pathToYAMLFile;
+  }
+
+  public loadFile(): any {
+    this.currentDocumentPath = relPathToAbs(this.currentDocumentPath, rootFilePath);
     var request = new XMLHttpRequest();
-    request.open('GET', pathToRAMLFile, false);
+    request.open('GET', this.currentDocumentPath, false);
     request.send(null);
     if (request.status === 200) {
       const api = safeLoad(request.responseText, {
-        schema: Schema.create([IncludeType])
+        schema: Schema.create([new IncludeType()])
       });
       return api;
     } else {
-      throw Error(request.status + ": GET " + pathToRAMLFile);
+      throw Error(request.status + ": GET " + this.currentDocumentPath);
     }
-  },
-  resolve: function(path: string) {
-    return true;
   }
-});
+
+}
+
+let rootFilePath;
+
+export class IncludeType extends Type {
+
+  constructor() {
+    super("!include", {
+      kind: "scalar",
+      construct: function (pathToRAMLFile) {
+        pathToRAMLFile = relPathToAbs(pathToRAMLFile, rootFilePath);
+        var request = new XMLHttpRequest();
+        request.open('GET', pathToRAMLFile, false);
+        request.send(null);
+        if (request.status === 200) {
+          const api = safeLoad(request.responseText, {
+            schema: Schema.create([new IncludeType()])
+          });
+          return api;
+        } else {
+          throw Error(request.status + ": GET " + pathToRAMLFile);
+        }
+      },
+      resolve: function (path: string) {
+        return true;
+      }
+    });
+  }
+}
 
 export class RAMLBackendConfig {
 
   static topLevelKeywords: string[] = ["title", "version", "baseUri",
-  "mediaType", "types", "securedBy"];
+    "mediaType", "types", "securedBy"];
 
 
   static initWithFile(pathToRAMLFile: string): RAMLBackendConfig {
@@ -94,16 +112,15 @@ export class RAMLBackendConfig {
 
     if (request.status === 200) {
       const api = safeLoad(request.responseText, {
-        schema: Schema.create([IncludeType])
+        schema: Schema.create([new IncludeType()])
       });
       return new RAMLBackendConfig(api);
     }
     throw new Error("failed to GET " + pathToRAMLFile + ": " + request.status);
   }
 
-  private static findBestDummyResponse(responses) : {statusCode: number, responseDefinition: any} {
+  private static findBestDummyResponse(responses): { statusCode: number, responseDefinition: any } {
     let bestFittingResp = null, bestFittingRespCode = null;
-    console.log("looking for responses: ", Object.keys(responses))
     for (const code in responses) {
       const candidate = responses[code];
       const statusCode = Number.parseInt(code);
@@ -229,10 +246,8 @@ export class RAMLBackendConfig {
 
   public lookupResponse(statusCode: number, exampleIdentifier: string): Response {
     const possibleResponseDefs = this.lookupResponseDefsByRequest(this.pendingBehaviorSpecification.request);
-    console.log(`looking for response with statusCode=${statusCode} in `, Object.keys(possibleResponseDefs));
     for (const code in possibleResponseDefs) {
       if (Number.parseInt(code) === statusCode) {
-        console.log("creating response, def: ", possibleResponseDefs[code])
         return this.buildResponseFromDefinition(statusCode, possibleResponseDefs[code], exampleIdentifier);
       }
     }
@@ -249,7 +264,6 @@ export class RAMLBackendConfig {
         if (pattern.matches(request)) {
           const rval = {};
           for (let statusCode in res[method].responses) {
-            console.log(`adding to possibleResponseDefs: ${statusCode} -> `, res[method].responses[statusCode])
             rval[statusCode] = res[method].responses[statusCode] || {};
           }
           return rval;
