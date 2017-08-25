@@ -26,7 +26,7 @@ export declare class RAMLBackendConfig {
     private isKeyword(candidate);
     private allResources(api);
     constructor(api: any);
-    private buildResponseFromDefinition(responseDefinition, exampleIdentifier?);
+    private buildResponseFromDefinition(statusCode, responseDefinition, exampleIdentifier?);
     stubAll(): RAMLBackendConfig;
     private lookupExampleResponseBody(respBodyDef, exampleIdentifier?);
     lookupResponse(statusCode: number, exampleIdentifier: string): Response;
