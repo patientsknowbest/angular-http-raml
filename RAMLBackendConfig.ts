@@ -181,7 +181,7 @@ export class RAMLBackendConfig {
 
         const pattern = new RequestPattern(resourceUri, methodName, schema);
         const responseDefinition = RAMLBackendConfig.findBestDummyResponse(method["responses"]);
-        const response = this.buildResponseFromDefinition(responseDefinition);
+        const response = this.buildResponseFromDefinition(200, responseDefinition);
         entries.push({
           requestPattern: pattern,
           response: response,
@@ -192,9 +192,9 @@ export class RAMLBackendConfig {
     this.defined = entries;
   }
 
-  private buildResponseFromDefinition(responseDefinition, exampleIdentifier?: string) {
+  private buildResponseFromDefinition(statusCode, responseDefinition, exampleIdentifier?: string) {
     return new Response(new ResponseOptions({
-      status: 200, // TODO
+      status: statusCode,
       body: this.lookupExampleResponseBody(responseDefinition["body"], exampleIdentifier)
     }));
   }
@@ -227,12 +227,7 @@ export class RAMLBackendConfig {
       }
       throwError();
     }
-    if (respBodyDef["example"] === null) {
-      console.log(Object.keys(exampleDefs));
-      return exampleDefs[0].value();
-    } else {
-      return respBodyDef["example"];
-    }
+    return respBodyDef["example"];
   }
 
   public lookupResponse(statusCode: number, exampleIdentifier: string): Response {
@@ -241,7 +236,7 @@ export class RAMLBackendConfig {
     for (const code in possibleResponseDefs) {
       if (Number.parseInt(code) === statusCode) {
         console.log("creating response, def: ", possibleResponseDefs[code])
-        return this.buildResponseFromDefinition(possibleResponseDefs[code], exampleIdentifier);
+        return this.buildResponseFromDefinition(statusCode, possibleResponseDefs[code], exampleIdentifier);
       }
     }
     throw new InvalidStubbingError("there is no response defined with status code " + statusCode + " in the RAML file");
