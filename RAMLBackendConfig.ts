@@ -70,7 +70,6 @@ export const IncludeType = new Type("!include", {
       const api = safeLoad(request.responseText, {
         schema: Schema.create([IncludeType])
       });
-      console.log(pathToRAMLFile, api)
       return api;
     } else {
       throw Error(request.status + ": GET " + pathToRAMLFile);
@@ -97,7 +96,6 @@ export class RAMLBackendConfig {
       const api = safeLoad(request.responseText, {
         schema: Schema.create([IncludeType])
       });
-      console.log(pathToRAMLFile, api)
       return new RAMLBackendConfig(api);
     }
     throw new Error("failed to GET " + pathToRAMLFile + ": " + request.status);
@@ -105,7 +103,6 @@ export class RAMLBackendConfig {
 
   private static findBestDummyResponse(responses) {
     let bestFittingResp = null, bestFittingRespCode = null;
-    console.log(responses)
     console.log("looking for responses: ", Object.keys(responses))
     for (const code in responses) {
       const candidate = responses[code];
@@ -173,18 +170,14 @@ export class RAMLBackendConfig {
   }
 
   constructor(private api) {
-    console.log(typeof api, api)
     const entries: Behavior[] = [];
     const allResources = this.allResources(this.api);
     for (const i in allResources) {
       const resource = allResources[i];
       const resourceUri = this.absoluteUri(i);
-      console.log("resource:", resource, i, allResources)
       for (const methodName in resource) {
         const method = resource[methodName];
         const schema = this.findRequestBodySchema(method);
-
-        console.log("method: ", method)
 
         const pattern = new RequestPattern(resourceUri, methodName, schema);
         const responseDefinition = RAMLBackendConfig.findBestDummyResponse(method["responses"]);
@@ -244,22 +237,30 @@ export class RAMLBackendConfig {
 
   public lookupResponse(statusCode: number, exampleIdentifier: string): Response {
     const possibleResponseDefs = this.lookupResponseDefsByRequest(this.pendingBehaviorSpecification.request);
+    console.log(`looking for response with statusCode=${statusCode} in `, Object.keys(possibleResponseDefs));
     for (const code in possibleResponseDefs) {
       if (Number.parseInt(code) === statusCode) {
+        console.log("creating response, def: ", possibleResponseDefs[code])
         return this.buildResponseFromDefinition(possibleResponseDefs[code], exampleIdentifier);
       }
     }
     throw new InvalidStubbingError("there is no response defined with status code " + statusCode + " in the RAML file");
   }
 
-  private lookupResponseDefsByRequest(request: Request): any[] {
-    for (const i in this.api.resources()) {
-      const res = this.api.resources()[i];
-      for (const j in res.methods()) {
-        const method = res.methods()[j];
-        const pattern = new RequestPattern(res.absoluteUri(), method.method(), this.findRequestBodySchema(method));
+  private lookupResponseDefsByRequest(request: Request): any {
+    for (const i in this.allResources(this.api)) {
+      const res = this.allResources(this.api)[i];
+      let methods = Object.keys(res);
+      for (const methodName in methods) {
+        const method = methods[methodName];
+        const pattern = new RequestPattern(this.absoluteUri(i), method, this.findRequestBodySchema(res[method]));
         if (pattern.matches(request)) {
-          return method.responses();
+          const rval = {};
+          for (let statusCode in res[method].responses) {
+            console.log(`adding to possibleResponseDefs: ${statusCode} -> `, res[method].responses[statusCode])
+            rval[statusCode] = res[method].responses[statusCode] || {};
+          }
+          return rval;
         }
       }
     }

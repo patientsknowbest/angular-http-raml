@@ -318,7 +318,7 @@ describe("response selection", () => {
     subject.verifyNoPendingRequests();
   });
 
-  it("throws exception if no examples are defined", () => {
+  fit("throws exception if no examples are defined", () => {
     try {
       const subject = RAMLBackendConfig.initWithFile("./base/testdata/status-codes.raml")
         .whenGET("/endpoint").thenRespondWith(200, "notFound")
@@ -363,7 +363,7 @@ describe("Body validation", () => {
     }
   });
 
-  fit("can refer to schemas in fragment", () => {
+  it("can refer to schemas in fragment", () => {
     const subject = createSubject("./base/testdata/endpoints-with-schemas.raml"), http = new Http(subject, new RequestOptions());
     const onSuccess = jasmine.createSpy("onSuccess");
 
