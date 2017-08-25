@@ -45,17 +45,6 @@ describe("RAMLBackend", () => {
     subject.verifyNoPendingRequests();
   });
 
-  it("uses the 0th example if there are more than one", () => {
-    const subject = createSubject(), http = new Http(subject, new RequestOptions());
-
-    http.get(absUri("/create/whatever")).subscribe(resp => {
-      expect(resp.status).toEqual(200);
-      expect(resp.json()).toEqual({name: "Alice"});
-    });
-
-    subject.verifyNoPendingRequests();
-  });
-
   it("matches path parameters", () => {
     const subject = createSubject(), http = new Http(subject, new RequestOptions());
 
@@ -318,7 +307,7 @@ describe("response selection", () => {
     subject.verifyNoPendingRequests();
   });
 
-  fit("throws exception if no examples are defined", () => {
+  it("throws exception if no examples are defined", () => {
     try {
       const subject = RAMLBackendConfig.initWithFile("./base/testdata/status-codes.raml")
         .whenGET("/endpoint").thenRespondWith(200, "notFound")

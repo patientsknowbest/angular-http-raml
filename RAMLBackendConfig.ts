@@ -220,15 +220,15 @@ export class RAMLBackendConfig {
       if (exampleDefs == null || exampleDefs.length === 0) {
         throwError();
       }
-      for (const i in exampleDefs) {
-        const example = exampleDefs[i];
-        if (example.name() === exampleIdentifier) {
-          return example.value();
+      for (const exampleName in exampleDefs) {
+        if (exampleName === exampleIdentifier) {
+          return exampleDefs[exampleName];
         }
       }
       throwError();
     }
     if (respBodyDef["example"] === null) {
+      console.log(Object.keys(exampleDefs));
       return exampleDefs[0].value();
     } else {
       return respBodyDef["example"];
