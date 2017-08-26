@@ -26,6 +26,17 @@ export class ResponseSetter {
 
 }
 
+function syncGet(path: string): string {
+  var request = new XMLHttpRequest();
+  request.open('GET', path, false);
+  request.send(null);
+  if (request.status === 200) {
+    return request.responseText;
+  } else {
+    throw Error(request.status + ": GET " + this.currentDocumentPath);
+  }
+}
+
 interface PendingBehaviorSpecification {
 
   prematchedBehavior: Behavior;
@@ -45,17 +56,10 @@ class YAMLFileLoader {
   }
 
   public loadFile(): any {
-    var request = new XMLHttpRequest();
-    request.open('GET', this.currentDocumentPath, false);
-    request.send(null);
-    if (request.status === 200) {
-      const api = safeLoad(request.responseText, {
+      const api = safeLoad(syncGet(this.currentDocumentPath), {
         schema: Schema.create([new IncludeType(this.currentDocumentPath)])
       });
       return api;
-    } else {
-      throw Error(request.status + ": GET " + this.currentDocumentPath);
-    }
   }
 
 }
@@ -75,18 +79,9 @@ export class IncludeType extends Type {
     super("!include", {
       kind: "scalar",
       construct: function (pathToRAMLFile) {
-        pathToRAMLFile = this.relPathToAbs(pathToRAMLFile);
-        var request = new XMLHttpRequest();
-        request.open('GET', pathToRAMLFile, false);
-        request.send(null);
-        if (request.status === 200) {
-          const api = safeLoad(request.responseText, {
-            schema: Schema.create([new IncludeType(pathToRAMLFile)])
-          });
-          return api;
-        } else {
-          throw Error(request.status + ": GET " + pathToRAMLFile);
-        }
+        return safeLoad(syncGet(this.relPathToAbs(pathToRAMLFile)), {
+          schema: Schema.create([new IncludeType(pathToRAMLFile)])
+        });
       },
       resolve: function (path: string) {
         return true;
