@@ -12,7 +12,9 @@ export declare class ResponseSetter {
     thenRespondWith(statusCode: number, exampleIdentifier?: string): RAMLBackendConfig;
 }
 export declare class IncludeType extends Type {
-    constructor();
+    private parentDocumentPath;
+    private relPathToAbs(sRelPath);
+    constructor(parentDocumentPath: any);
 }
 export declare class RAMLBackendConfig {
     private api;
