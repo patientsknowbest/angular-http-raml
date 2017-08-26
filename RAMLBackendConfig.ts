@@ -36,15 +36,6 @@ interface PendingBehaviorSpecification {
 
 }
 
-function relPathToAbs(sRelPath, currentPath = location.pathname) {
-  var nUpLn, sDir = "", sPath = currentPath.replace(/[^\/]*$/, sRelPath.replace(/(\/|^)(?:\.?\/+)+/g, "$1"));
-  for (var nEnd, nStart = 0; nEnd = sPath.indexOf("/../", nStart), nEnd > -1; nStart = nEnd + nUpLn) {
-    nUpLn = /^\/(?:\.\.\/)*/.exec(sPath.slice(nEnd))[0].length;
-    sDir = (sDir + sPath.substring(nStart, nEnd)).replace(new RegExp("(?:\\\/+[^\\\/]*){0," + ((nUpLn - 1) / 3) + "}$"), "/");
-  }
-  return sDir + sPath.substr(nStart);
-}
-
 class YAMLFileLoader {
 
   private currentDocumentPath;
@@ -71,11 +62,20 @@ class YAMLFileLoader {
 
 export class IncludeType extends Type {
 
+  private relPathToAbs(sRelPath) {
+    var nUpLn, sDir = "", sPath = this.parentDocumentPath.replace(/[^\/]*$/, sRelPath.replace(/(\/|^)(?:\.?\/+)+/g, "$1"));
+    for (var nEnd, nStart = 0; nEnd = sPath.indexOf("/../", nStart), nEnd > -1; nStart = nEnd + nUpLn) {
+      nUpLn = /^\/(?:\.\.\/)*/.exec(sPath.slice(nEnd))[0].length;
+      sDir = (sDir + sPath.substring(nStart, nEnd)).replace(new RegExp("(?:\\\/+[^\\\/]*){0," + ((nUpLn - 1) / 3) + "}$"), "/");
+    }
+    return sDir + sPath.substr(nStart);
+  }
+
   constructor(private parentDocumentPath) {
     super("!include", {
       kind: "scalar",
       construct: function (pathToRAMLFile) {
-        pathToRAMLFile = relPathToAbs(pathToRAMLFile, this.parentDocumentPath);
+        pathToRAMLFile = this.relPathToAbs(pathToRAMLFile);
         var request = new XMLHttpRequest();
         request.open('GET', pathToRAMLFile, false);
         request.send(null);
