@@ -54,13 +54,12 @@ class YAMLFileLoader {
   }
 
   public loadFile(): any {
-    this.currentDocumentPath = relPathToAbs(this.currentDocumentPath, rootFilePath);
     var request = new XMLHttpRequest();
     request.open('GET', this.currentDocumentPath, false);
     request.send(null);
     if (request.status === 200) {
       const api = safeLoad(request.responseText, {
-        schema: Schema.create([new IncludeType()])
+        schema: Schema.create([new IncludeType(this.currentDocumentPath)])
       });
       return api;
     } else {
@@ -70,21 +69,19 @@ class YAMLFileLoader {
 
 }
 
-let rootFilePath;
-
 export class IncludeType extends Type {
 
-  constructor() {
+  constructor(private parentDocumentPath) {
     super("!include", {
       kind: "scalar",
       construct: function (pathToRAMLFile) {
-        pathToRAMLFile = relPathToAbs(pathToRAMLFile, rootFilePath);
+        pathToRAMLFile = relPathToAbs(pathToRAMLFile, this.parentDocumentPath);
         var request = new XMLHttpRequest();
         request.open('GET', pathToRAMLFile, false);
         request.send(null);
         if (request.status === 200) {
           const api = safeLoad(request.responseText, {
-            schema: Schema.create([new IncludeType()])
+            schema: Schema.create([new IncludeType(pathToRAMLFile)])
           });
           return api;
         } else {
@@ -105,18 +102,8 @@ export class RAMLBackendConfig {
 
 
   static initWithFile(pathToRAMLFile: string): RAMLBackendConfig {
-    rootFilePath = pathToRAMLFile;
-    var request = new XMLHttpRequest();
-    request.open('GET', pathToRAMLFile, false);  // `false` makes the request synchronous
-    request.send(null);
-
-    if (request.status === 200) {
-      const api = safeLoad(request.responseText, {
-        schema: Schema.create([new IncludeType()])
-      });
-      return new RAMLBackendConfig(api);
-    }
-    throw new Error("failed to GET " + pathToRAMLFile + ": " + request.status);
+    const api = new YAMLFileLoader(pathToRAMLFile).loadFile();
+    return new RAMLBackendConfig(api);
   }
 
   private static findBestDummyResponse(responses): { statusCode: number, responseDefinition: any } {
