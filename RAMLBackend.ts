@@ -165,7 +165,6 @@ export class ResponsePattern {
     try {
       const respJson = response.json();
       if (!ajv.validate(this.responseBodySchema, respJson)) {
-        console.log(ajv.errors);
         return false;
       }
     } catch (e) {
