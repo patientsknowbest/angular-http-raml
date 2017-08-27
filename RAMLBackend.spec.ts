@@ -158,7 +158,7 @@ describe("explicit stubs", () => {
     }
   });
 
-  xit("refuses invalid response bodies", () => {
+  it("refuses invalid response bodies", () => {
     try {
       const subject = initStubConfig().whenGET("/endpoint")
         .thenRespond(new Response(new ResponseOptions({

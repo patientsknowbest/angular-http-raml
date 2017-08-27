@@ -1,6 +1,4 @@
-/// <reference types="js-yaml" />
 import { RAMLBackend } from "./RAMLBackend";
-import { Type } from "js-yaml";
 import { Request, Response } from "@angular/http";
 export declare class InvalidStubbingError extends Error {
 }
@@ -10,11 +8,6 @@ export declare class ResponseSetter {
     constructor(owner: RAMLBackendConfig, onReady: (response: Response) => void);
     thenRespond(response: Response): RAMLBackendConfig;
     thenRespondWith(statusCode: number, exampleIdentifier?: string): RAMLBackendConfig;
-}
-export declare class IncludeType extends Type {
-    private parentDocumentPath;
-    private relPathToAbs(sRelPath);
-    constructor(parentDocumentPath: any);
 }
 export declare class RAMLBackendConfig {
     private api;
