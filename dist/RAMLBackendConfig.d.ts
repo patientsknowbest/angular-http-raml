@@ -18,6 +18,7 @@ export declare class RAMLBackendConfig {
     private stubbed;
     private expected;
     private pendingBehaviorSpecification;
+    private getSchema(type);
     private findRequestBodySchema(method);
     private absoluteUri(relativeUri);
     private isKeyword(candidate);
@@ -28,6 +29,7 @@ export declare class RAMLBackendConfig {
     private lookupExampleResponseBody(respBodyDef, exampleIdentifier?);
     lookupResponse(statusCode: number, exampleIdentifier: string): Response;
     private lookupResponseDefsByRequest(request);
+    private buildResponsePatterns(responses);
     private onStubResponseAvailable(requestPattern, response);
     private onMockResponseAvailable(behavior);
     whenGET(uri: string): ResponseSetter;

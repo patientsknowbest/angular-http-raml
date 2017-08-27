@@ -27,9 +27,17 @@ export declare class URIPattern {
 export declare class RequestPattern {
     readonly expectedMethod: string;
     private readonly schema;
+    readonly responsePatterns: ResponsePattern[];
     private expectedUri;
-    constructor(expectedUri: string, expectedMethod: string, schema: any);
+    constructor(expectedUri: string, expectedMethod: string, schema: any, responsePatterns: ResponsePattern[]);
     matches(request: Request): URIParams;
+    findResponsePatternByStatusCode(statusCode: number): ResponsePattern;
+}
+export declare class ResponsePattern {
+    readonly expectedStatusCode: number;
+    private responseBodySchema;
+    constructor(expectedStatusCode: number, responseBodySchema: any);
+    matches(response: Response): boolean;
 }
 export interface Behavior {
     requestPattern: RequestPattern;
