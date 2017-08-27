@@ -1,7 +1,7 @@
-import {Behavior, DefaultRequestValidator, NoopRequestValidator, RAMLBackend, RequestPattern} from "./RAMLBackend";
+import {Behavior, DefaultRequestValidator, NoopRequestValidator, RAMLBackend, RequestPattern, ResponsePattern} from "./RAMLBackend";
 import {Request, RequestMethod, Response, ResponseOptions} from "@angular/http";
-import URL = require("url-parse");
 import {YAMLFileLoader} from "./RAMLLoader";
+import URL = require("url-parse");
 
 export class InvalidStubbingError extends Error {
 
@@ -70,19 +70,31 @@ export class RAMLBackendConfig {
 
   private pendingBehaviorSpecification: PendingBehaviorSpecification = null;
 
-  private findRequestBodySchema(method): any {
-    if (method["body"] && method["body"]["type"]) {
-      const rawSchema = method["body"]["type"];
-      try {
+  private getSchema(type: string): any {
+    if (!type) {
+      return {};
+    }
+    if (typeof type === 'object') {
+      return type;
+    }
+    const rawSchema = type;
+    try {
+      if (typeof JSON.parse(rawSchema) === 'object') {
         return rawSchema;
-      } catch (e) {
-        const typeName = rawSchema.trim();
-        for (const t in this.api["types"]) {
-          if (t === typeName) {
-            return JSON.parse(this.api["types"][t].toString());
-          }
+      }
+    } catch (e) {
+      const typeName = rawSchema.trim();
+      for (const t in this.api["types"]) {
+        if (t === typeName) {
+          return this.api["types"][t];
         }
       }
+    }
+  }
+
+  private findRequestBodySchema(method): any {
+    if (method.body && method.body.type) {
+      return this.getSchema(method.body.type);
     } else {
       return null;
     }
@@ -121,7 +133,7 @@ export class RAMLBackendConfig {
         const method = resource[methodName];
         const schema = this.findRequestBodySchema(method);
 
-        const pattern = new RequestPattern(resourceUri, methodName, schema);
+        const pattern = new RequestPattern(resourceUri, methodName, schema, this.buildResponsePatterns(method.responses));
         const {statusCode, responseDefinition} = RAMLBackendConfig.findBestDummyResponse(method["responses"]);
         const response = this.buildResponseFromDefinition(statusCode, responseDefinition);
         entries.push({
@@ -188,7 +200,11 @@ export class RAMLBackendConfig {
       let methods = Object.keys(res);
       for (const methodName in methods) {
         const method = methods[methodName];
-        const pattern = new RequestPattern(this.absoluteUri(i), method, this.findRequestBodySchema(res[method]));
+        const pattern = new RequestPattern(this.absoluteUri(i),
+          method,
+          this.findRequestBodySchema(res[method]),
+          this.buildResponsePatterns(res[method].responses)
+        );
         if (pattern.matches(request)) {
           const rval = {};
           for (let statusCode in res[method].responses) {
@@ -201,8 +217,26 @@ export class RAMLBackendConfig {
     throw "not found";
   }
 
+  private buildResponsePatterns(responses: any): ResponsePattern[] {
+    const rval: ResponsePattern[] = [];
+    for (const statusCode in responses) {
+      if (responses[statusCode] !== null) {
+        rval.push(new ResponsePattern(Number(statusCode), this.getSchema((responses[statusCode].body || {}).type)));
+      }
+    }
+    return rval;
+  }
+
   private onStubResponseAvailable(requestPattern: RequestPattern, response: Response) {
-    // this.pendingBehaviorSpecification.prematchedBehavior.;
+    let found: boolean = false;
+    const respPattern: ResponsePattern = requestPattern.findResponsePatternByStatusCode(response.status);
+    if (respPattern !== null) {
+      if (!respPattern.matches(response)) {
+        throw new InvalidStubbingError("invalid stub response body");
+      } else {
+
+      }
+    }
     this.stubbed.unshift({
       response: response,
       requestPattern: requestPattern,
@@ -293,7 +327,8 @@ export class RAMLBackendConfig {
       if (behavior.requestPattern.matches(request)) {
         this.markRequestAsPending(request, behavior);
         if ((validationError = behavior.requestValidator.matches(request)) === null) {
-          return new ResponseSetter(this, response => this.onStubResponseAvailable(new RequestPattern(path, method, null), response));
+          return new ResponseSetter(this, response => this.onStubResponseAvailable(
+            new RequestPattern(path, method, null, behavior.requestPattern.responsePatterns), response));
         } else {
           throw new InvalidStubbingError(validationError);
         }

@@ -112,16 +112,17 @@ describe("explicit stubs", () => {
   }
 
   it("overrides 'example' responses", ()  => {
+    const explicitAccessToken = "ACCT456";
     const subject = initStubConfig()
       .whenGET("/endpoint").thenRespond(new Response(new ResponseOptions({
         status: 200,
-        body: JSON.stringify({access_token: 456})
+        body: JSON.stringify({access_token: "ACCT456"})
       })))
       .createBackend();
-     const http = new Http(subject, new RequestOptions());
 
-     http.get(absUri("/endpoint")).subscribe(resp => {
-       expect(resp.json()).toEqual({access_token: 456});
+     const http = new Http(subject, new RequestOptions());
+    http.get(absUri("/endpoint")).subscribe(resp => {
+       expect(resp.json()).toEqual({access_token: explicitAccessToken});
    })
 
   });
@@ -167,6 +168,7 @@ describe("explicit stubs", () => {
         })));
       fail("did not throw exception for invalid response body");
     } catch (e) {
+      console.log(e)
       expect(e).toEqual(new InvalidStubbingError("invalid stub response body"));
     }
   })
@@ -185,7 +187,7 @@ describe("explicit stubs", () => {
 
   it("can chain multiple stubbing", () => {
     initStubConfig().whenGET("/endpoint").thenRespond(new Response(new ResponseOptions({
-      status: 200, body: ""
+      status: 200, body: "{\"access_token\":\"xxx\"}"
       })
     )).whenPOST("/endpoint").thenRespond(new Response(new ResponseOptions({status: 201, body: "Created"})));
   });

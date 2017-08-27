@@ -121,7 +121,8 @@ export class RequestPattern {
   constructor(
     expectedUri: string,
     readonly expectedMethod: string,
-    private readonly schema
+    private readonly schema,
+    readonly responsePatterns: ResponsePattern[]
   ) {
     this.expectedUri = new URIPattern(expectedUri);
   }
@@ -140,6 +141,41 @@ export class RequestPattern {
     return uriParams;
   }
 
+  public findResponsePatternByStatusCode(statusCode: number): ResponsePattern {
+    for (const i in this.responsePatterns) {
+      let candidate = this.responsePatterns[i];
+      if (candidate.expectedStatusCode === statusCode) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
+}
+
+export class ResponsePattern {
+
+  constructor(readonly expectedStatusCode: number,
+              private responseBodySchema) {}
+
+  public matches(response: Response): boolean {
+    if (response.status !== this.expectedStatusCode) {
+      return false;
+    }
+    try {
+      const respJson = response.json();
+      if (!ajv.validate(this.responseBodySchema, respJson)) {
+        console.log(ajv.errors);
+        return false;
+      }
+    } catch (e) {
+      const rawResp = response.text();
+      if (!ajv.validate(this.responseBodySchema, rawResp)) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 export interface Behavior {
