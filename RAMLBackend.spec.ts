@@ -168,10 +168,21 @@ describe("explicit stubs", () => {
         })));
       fail("did not throw exception for invalid response body");
     } catch (e) {
-      console.log(e)
       expect(e).toEqual(new InvalidStubbingError("invalid stub response body"));
     }
-  })
+  });
+
+  it("also validates non-object response bodies", () => {
+    try {
+      initStubConfig().whenPOST("/endpoint").thenRespond(new Response(new ResponseOptions({
+        status: 201,
+        body: "gg wp"
+      })));
+      fail("did not throw exception for invalid response body");
+    } catch (e) {
+      expect(e).toEqual(new InvalidStubbingError("invalid stub response body"));
+    }
+  });
 
   it("fails if there is pending behavior (unset response)", () => {
     try {
@@ -255,7 +266,7 @@ describe("explicit stubs", () => {
     });
     const response = new Response(new ResponseOptions({
       status: 201,
-      body: JSON.stringify({message: "created"})
+      body: "created"
     }));
     const subject = initStubConfig().whenRequestIs(request).thenRespond(response).createBackend();
     const http = new Http(subject, new RequestOptions());

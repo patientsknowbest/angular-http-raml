@@ -228,13 +228,10 @@ export class RAMLBackendConfig {
   }
 
   private onStubResponseAvailable(requestPattern: RequestPattern, response: Response) {
-    let found: boolean = false;
     const respPattern: ResponsePattern = requestPattern.findResponsePatternByStatusCode(response.status);
     if (respPattern !== null) {
       if (!respPattern.matches(response)) {
         throw new InvalidStubbingError("invalid stub response body");
-      } else {
-
       }
     }
     this.stubbed.unshift({
