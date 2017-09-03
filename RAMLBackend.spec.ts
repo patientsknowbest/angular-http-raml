@@ -77,11 +77,11 @@ describe("RAMLBackend", () => {
     subject.verifyNoPendingRequests();
   });
 
-  xit("checks the type of path params", () => {
-
-  });
 
   xit("no example, no examples", () => {
+
+  });
+  xit("checks the type of path params", () => {
 
   });
 
