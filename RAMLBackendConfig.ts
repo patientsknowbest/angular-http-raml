@@ -124,6 +124,10 @@ export class RAMLBackendConfig {
   }
 
   constructor(private api) {
+    this.loadDefinedBehaviors();
+  }
+
+  private loadDefinedBehaviors() {
     const entries: Behavior[] = [];
     const allResources = this.allResources(this.api);
     for (const i in allResources) {
@@ -245,6 +249,15 @@ export class RAMLBackendConfig {
   private onMockResponseAvailable(behavior: Behavior) {
     this.expected.push(behavior);
     this.pendingBehaviorSpecification = null;
+  }
+
+  public baseUri(baseUri: string): RAMLBackendConfig {
+    if (this.stubbed.length > 0) {
+      throw new InvalidStubbingError("cannot change baseUri after stubs are defined");
+    }
+    this.api["baseUri"] = baseUri;
+    this.loadDefinedBehaviors();
+    return this;
   }
 
   public whenGET(uri: string): ResponseSetter {

@@ -67,6 +67,29 @@ describe("RAMLBackend", () => {
     subject.verifyNoPendingRequests();
   });
 
+  it("can use altered base uri", () => {
+    const subject = RAMLBackendConfig.initWithFile("/base/testdata/test-endpoints.raml")
+      .baseUri("http://somewhere-else")
+      .stubAll()
+      .createBackend();
+    const http = new Http(subject, new RequestOptions());
+
+    http.get("http://somewhere-else/queryparams").subscribe(resp => {
+      expect(resp.json()).toEqual({name: "John Smith"});
+    });
+
+    subject.verifyNoPendingRequests();
+  });
+
+  it("refuses to change base uri after any stubbing happened", () => {
+    try {
+      RAMLBackendConfig.initWithFile("/base/testdata/test-endpoints.raml").stubAll().baseUri("asd");
+      fail("did not throw exception");
+    } catch (e) {
+      expect(e).toEqual(new InvalidStubbingError("cannot change baseUri after stubs are defined"))
+    }
+  });
+
   xit("checks headers" , () => {
     const subject = createSubject(), http = new Http(subject, new RequestOptions());
 
@@ -76,8 +99,6 @@ describe("RAMLBackend", () => {
 
     subject.verifyNoPendingRequests();
   });
-
-
   xit("no example, no examples", () => {
 
   });
