@@ -1,0 +1,10 @@
+#%RAML 1.0
+title: Authentication endpoint
+baseUri: http://dummy-cc-backend
+/auth/token:
+  get:
+    queryParameters:
+      code:
+        type: string
+    responses:
+      200:

@@ -23,10 +23,10 @@
     "zone.js": "^0.8.4"
   },
   "devDependencies": {
-    "@angular/common": "^4.2.4",
-    "@angular/core": "^4.2.4",
-    "@angular/http": "^4.2.4",
-    "@angular/platform-browser": "^4.2.4",
+    "@angular/common": "^4.3.6",
+    "@angular/core": "^4.3.6",
+    "@angular/http": "^4.3.6",
+    "@angular/platform-browser": "^4.3.6",
     "core-js": "^2.4.1",
     "duplexify": "^3.5.0",
     "fs.realpath": "^1.0.0",

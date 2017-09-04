@@ -378,3 +378,17 @@ describe("Body validation", () => {
   });
 
 });
+
+describe("regressions", () => {
+
+  fit("loads simple authentication raml", () => {
+    const subject = RAMLBackendConfig.initWithFile("/base/testdata/authentication.raml")
+      .stubAll()
+      .createBackend();
+    const http = new Http(subject, new RequestOptions());
+
+    http.get("http://dummy-cc-backend/auth/token?code=123").subscribe(e => {});
+
+  });
+
+})

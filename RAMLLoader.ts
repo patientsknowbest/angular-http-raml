@@ -7,7 +7,7 @@ function syncGet(path: string): string {
   if (request.status === 200) {
     return request.responseText;
   } else {
-    throw Error(request.status + ": GET " + this.currentDocumentPath);
+    throw Error(request.status + ": GET " + path);
   }
 }
 

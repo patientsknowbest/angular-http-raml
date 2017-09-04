@@ -203,7 +203,7 @@ export class RAMLBackend extends MockBackend {
         return new MatchResult(uriParams, entry.response, entry.requestValidator);
       }
     }
-    throw new Error("no matching request pattern found for " + request.method + " " + request.url);
+    throw new Error("no matching request pattern found for " + RequestMethod[request.method].toUpperCase() + " " + request.url);
   }
 
   private handleConnection(conn: MockConnection) {
