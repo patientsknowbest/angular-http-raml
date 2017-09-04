@@ -24,6 +24,7 @@ export declare class RAMLBackendConfig {
     private isKeyword(candidate);
     private allResources(api);
     constructor(api: any);
+    private loadDefinedBehaviors();
     private buildResponseFromDefinition(statusCode, responseDefinition, exampleIdentifier?);
     stubAll(): RAMLBackendConfig;
     private lookupExampleResponseBody(respBodyDef, exampleIdentifier?);
@@ -32,6 +33,7 @@ export declare class RAMLBackendConfig {
     private buildResponsePatterns(responses);
     private onStubResponseAvailable(requestPattern, response);
     private onMockResponseAvailable(behavior);
+    baseUri(baseUri: string): RAMLBackendConfig;
     whenGET(uri: string): ResponseSetter;
     whenHEAD(uri: string): ResponseSetter;
     whenPOST(uri: string): ResponseSetter;
