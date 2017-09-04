@@ -25,7 +25,17 @@ an angular Http object which speaks the same language as the API you defined.
 
 ## Installation
 
-TODO
+Install the library with `npm install --save-dev angular-http-raml`
+
+Then add the following entry to your karma configuration: 
+
+```
+files: [
+  ...
+  {pattern: "**/*.raml", included: false}
+  ...
+],
+```
 
 ## Stubbing
 

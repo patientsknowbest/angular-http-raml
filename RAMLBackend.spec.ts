@@ -381,7 +381,7 @@ describe("Body validation", () => {
 
 describe("regressions", () => {
 
-  fit("loads simple authentication raml", () => {
+  it("loads simple authentication raml", () => {
     const subject = RAMLBackendConfig.initWithFile("/base/testdata/authentication.raml")
       .stubAll()
       .createBackend();
